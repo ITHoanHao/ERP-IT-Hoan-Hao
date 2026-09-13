@@ -1,0 +1,31 @@
+<%- include('../partials/header', {title: 'Đơn mua'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Danh sách đơn mua hàng</h4>
+  <a href="/purchase-orders/new" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Tạo đơn mua</a>
+</div>
+<form method="GET" class="mb-3">
+  <input type="text" name="q" class="form-control" style="max-width:400px" placeholder="Tìm theo số đơn, nhà cung cấp, sản phẩm..." value="<%= q %>">
+</form>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Số đơn</th><th>Nhà cung cấp</th><th>Sản phẩm</th><th>Ngày đặt</th><th>Trạng thái hệ thống</th><th>Theo dõi giao hàng</th><th>Tổng tiền</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><a href="/purchase-orders/<%= r.id %>"><%= r.po_no %></a></td>
+      <td><%= r.supplier_name %></td>
+      <td class="text-muted small"><%= r.items_preview || '-' %></td>
+      <td><%= formatDate(r.order_date) %></td>
+      <td>
+        <% const st = {ordered:['Đã đặt','info'],partially_received:['Nhận một phần','warning'],completed:['Hoàn tất','success'],cancelled:['Đã hủy','danger']}[r.status]; %>
+        <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+      </td>
+      <td><span class="text-muted small"><%= r.delivery_status_note || 'Chờ xác nhận' %></span></td>
+      <td><%= formatMoney(r.total_amount) %></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="7" class="text-muted text-center py-3">Chưa có đơn mua nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

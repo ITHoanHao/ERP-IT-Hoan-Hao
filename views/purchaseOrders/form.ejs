@@ -1,0 +1,226 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<% if (typeof wizard !== 'undefined' && wizard) { %>
+  <div class="mb-2"><a href="/wizard/<%= wizard %>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại Wizard</a></div>
+<% } %>
+<form method="POST" action="/purchase-orders">
+  <% if (typeof wizard !== 'undefined' && wizard) { %><input type="hidden" name="wizard" value="<%= wizard %>"><% } %>
+  <input type="hidden" name="so_id" value="<%= soId || '' %>">
+  <div class="card p-3 mb-3">
+    <div class="row g-3">
+      <div class="col-md-5">
+        <label class="form-label">Nhà cung cấp *</label>
+        <select name="supplier_id" class="form-select searchable-select" data-placeholder="Gõ tên nhà cung cấp để tìm..." required>
+          <option value="">-- Chọn nhà cung cấp --</option>
+          <% suppliers.forEach(s => { %><option value="<%= s.id %>"><%= s.name %></option><% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Ngày dự kiến về</label>
+        <input type="date" name="expected_date" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Trạng thái theo dõi giao hàng</label>
+        <select name="delivery_status_note" class="form-select">
+          <% DELIVERY_STATUS_OPTIONS.forEach(s => { %><option value="<%= s %>" <%= s === 'Chờ xác nhận' ? 'selected' : '' %>><%= s %></option><% }) %>
+        </select>
+      </div>
+      <% if (soId) { %>
+      <div class="col-md-12">
+        <div class="alert alert-info py-2 mb-0">Đơn mua này liên kết với Sales Order #<%= soId %> (không bắt buộc).</div>
+      </div>
+      <% } %>
+    </div>
+  </div>
+  <div class="card p-3 mb-3">
+    <div class="d-flex justify-content-between">
+      <h6>Chi tiết đặt hàng</h6>
+      <button type="button" class="btn btn-sm btn-outline-primary" onclick="addLine()">+ Thêm dòng</button>
+    </div>
+    <table class="table table-sm">
+      <thead><tr><th style="width:26%">Sản phẩm *</th><th style="width:10%">Số lượng</th><th style="width:16%">Giá nhập dự kiến</th><th style="width:20%">Thuế suất</th><th style="width:16%">Thành tiền</th><th></th></tr></thead>
+      <tbody id="lineBody"></tbody>
+    </table>
+    <div class="text-end mt-2" id="totalsBox"></div>
+  </div>
+  <button type="submit" class="btn btn-primary">Lưu đơn mua hàng</button>
+  <a href="/purchase-orders" class="btn btn-outline-secondary">Hủy</a>
+</form>
+
+<template id="lineTpl">
+  <tr>
+    <td>
+      <select name="line_product" class="form-select form-select-sm searchable-select" data-placeholder="Gõ tên sản phẩm để tìm..." required>
+        <option value="">-- Chọn --</option>
+        <% products.forEach(p => { %><option value="<%= p.id %>"><%= p.name %> (<%= p.sku %>)</option><% }) %>
+      </select>
+    </td>
+    <td><input type="number" name="line_qty" class="form-control form-control-sm qty-input" value="1" min="0" step="any" onchange="calc(this)"></td>
+    <td>
+      <div class="input-group input-group-sm">
+        <input type="text" name="line_price" class="form-control price-input money-input-decimal" value="0" onchange="calc(this)">
+        <button type="button" class="btn btn-outline-secondary" title="Tính đơn giá từ tổng tiền mong muốn" onclick="openReverseCalc(this)"><i class="bi bi-calculator"></i></button>
+      </div>
+    </td>
+    <td>
+      <select name="line_tax" class="form-select form-select-sm tax-input" onchange="calc(this)">
+        <% TAX_OPTIONS.forEach(t => { %><option value="<%= t %>" <%= t === '8%' ? 'selected' : '' %>><%= t %></option><% }) %>
+      </select>
+    </td>
+    <td><span class="line-amount">0</span></td>
+    <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove(); updateTotals()">×</button></td>
+  </tr>
+</template>
+<script>
+const soLines = <%- JSON.stringify(soLines || []) %>;
+function taxPercent(label) {
+  const m = String(label || '').match(/(\d+)\s*%/);
+  return m ? parseFloat(m[1]) : 0;
+}
+function addLine(productId, qty, price) {
+  const tpl = document.getElementById('lineTpl');
+  const clone = tpl.content.cloneNode(true);
+  const tr = clone.querySelector('tr');
+  if (productId) tr.querySelector('select[name="line_product"]').value = productId;
+  if (qty) tr.querySelector('.qty-input').value = qty;
+  if (price) tr.querySelector('.price-input').value = String(price).replace('.', ',');
+  document.getElementById('lineBody').appendChild(clone);
+  const addedRow = document.getElementById('lineBody').lastElementChild;
+  initSearchableSelects(addedRow);
+  attachMoneyFormatting(addedRow);
+  addedRow.querySelector('.money-input-decimal').addEventListener('money-changed', () => calcAllRow(addedRow));
+  calcAllRow(addedRow);
+}
+function calc(el) { calcAllRow(el.closest('tr')); }
+function calcAllRow(tr) {
+  const qty = parseFloat(tr.querySelector('.qty-input').value) || 0;
+  const price = parseFloat(rawMoneyDecimalValue(tr.querySelector('.price-input'))) || 0;
+  const tax = taxPercent(tr.querySelector('.tax-input').value);
+  const amount = Math.round(qty * price); // chua VAT, lam tron tung dong
+  const amountWithVat = amount + Math.round(amount * tax / 100);
+  tr.querySelector('.line-amount').textContent = amountWithVat.toLocaleString('vi-VN') + (tax > 0 ? ' (đã gồm VAT)' : '');
+  updateTotals();
+}
+function updateTotals() {
+  let subtotal = 0, vat = 0;
+  document.querySelectorAll('#lineBody tr').forEach(tr => {
+    const qty = parseFloat(tr.querySelector('.qty-input').value) || 0;
+    const price = parseFloat(rawMoneyDecimalValue(tr.querySelector('.price-input'))) || 0;
+    const tax = taxPercent(tr.querySelector('.tax-input').value);
+    const amount = qty * price;
+    subtotal += Math.round(amount); // lam tron "Thanh tien" tung dong, khop chuan hoa don thue
+    vat += Math.round(amount * tax / 100); // lam tron VAT tung dong, khop voi cach tinh phia server
+  });
+  document.getElementById('totalsBox').innerHTML =
+    `<div>Tạm tính (chưa VAT): <strong>${subtotal.toLocaleString('vi-VN')}</strong> đ</div>
+     <div>Tiền thuế VAT: <strong>${vat.toLocaleString('vi-VN')}</strong> đ</div>
+     <div class="fs-5">Tổng cộng thanh toán NCC: <strong>${(subtotal+vat).toLocaleString('vi-VN')}</strong> đ</div>`;
+}
+document.addEventListener('DOMContentLoaded', () => {
+  if (soLines.length) {
+    soLines.forEach(l => addLine(l.product_id, l.quantity - (l.quantity_delivered||0), l.unit_price));
+  } else {
+    addLine();
+  }
+});
+</script>
+
+<!-- Modal tinh nguoc don gia tu tong tien mong muon (giong Bao gia) -->
+<div class="modal fade" id="reverseCalcModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tính đơn giá từ tổng tiền mong muốn</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small">Nhập tổng tiền dòng này bạn muốn thanh toán cho NCC (đã gồm VAT), hệ thống sẽ tự tính ra giá nhập (chưa VAT) cần nhập để ra đúng số đó.</p>
+        <div class="mb-2"><span class="text-muted">Số lượng:</span> <strong id="rc_qty_display"></strong> &nbsp; <span class="text-muted">Thuế suất:</span> <strong id="rc_tax_display"></strong>%</div>
+        <label class="form-label">Tổng tiền mong muốn (đã gồm VAT) *</label>
+        <input type="text" id="rc_target" class="form-control money-input" value="0" autofocus>
+        <div id="rc_result" class="alert alert-info py-2 mt-3 d-none"></div>
+        <div id="rc_error" class="alert alert-danger py-2 mt-3 d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-primary" onclick="applyReverseCalc()">Áp dụng vào dòng này</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let reverseCalcTargetRow = null;
+let reverseCalcModalInstance = null;
+document.addEventListener('DOMContentLoaded', () => {
+  reverseCalcModalInstance = new bootstrap.Modal(document.getElementById('reverseCalcModal'));
+  document.getElementById('rc_target').addEventListener('money-changed', computeReverseCalc);
+});
+
+function computeLineTotal(qty, price, taxRate) {
+  const amount = qty * price;
+  const subtotal = Math.round(amount);
+  const vat = Math.round(amount * taxRate / 100);
+  return subtotal + vat;
+}
+
+function reverseCalcPrice(qty, taxRate, target) {
+  if (!qty || qty <= 0) return null;
+  let price = target / (qty * (1 + taxRate / 100));
+  if (computeLineTotal(qty, price, taxRate) === target) return price;
+  const step = 1 / qty / 1000000;
+  for (let i = 1; i <= 50; i++) {
+    if (computeLineTotal(qty, price + i * step, taxRate) === target) return price + i * step;
+    if (computeLineTotal(qty, price - i * step, taxRate) === target) return price - i * step;
+  }
+  return price;
+}
+
+function openReverseCalc(btn) {
+  const tr = btn.closest('tr');
+  reverseCalcTargetRow = tr;
+  const qty = parseFloat(tr.querySelector('.qty-input').value) || 0;
+  const tax = taxPercent(tr.querySelector('.tax-input').value);
+  document.getElementById('rc_qty_display').textContent = qty;
+  document.getElementById('rc_tax_display').textContent = tax;
+  document.getElementById('rc_target').value = '0';
+  document.getElementById('rc_result').classList.add('d-none');
+  document.getElementById('rc_error').classList.add('d-none');
+  reverseCalcModalInstance.show();
+}
+
+function computeReverseCalc() {
+  if (!reverseCalcTargetRow) return;
+  const qty = parseFloat(reverseCalcTargetRow.querySelector('.qty-input').value) || 0;
+  const tax = taxPercent(reverseCalcTargetRow.querySelector('.tax-input').value);
+  const target = parseFloat(rawMoneyValue(document.getElementById('rc_target'))) || 0;
+  const resultBox = document.getElementById('rc_result');
+  const errorBox = document.getElementById('rc_error');
+  if (!qty || target <= 0) { resultBox.classList.add('d-none'); errorBox.classList.add('d-none'); return; }
+  const price = reverseCalcPrice(qty, tax, target);
+  const achieved = computeLineTotal(qty, price, tax);
+  if (achieved === target) {
+    resultBox.classList.remove('d-none');
+    errorBox.classList.add('d-none');
+    resultBox.innerHTML = `Giá nhập cần nhập: <strong>${price.toLocaleString('vi-VN', {maximumFractionDigits: 6})}</strong> đ<br>→ Ra đúng tổng: <strong>${achieved.toLocaleString('vi-VN')}</strong> đ`;
+  } else {
+    resultBox.classList.add('d-none');
+    errorBox.classList.remove('d-none');
+    errorBox.textContent = `Không tìm được đơn giá khớp tuyệt đối (gần nhất ra ${achieved.toLocaleString('vi-VN')} đ, lệch ${Math.abs(achieved-target)} đ). Trường hợp này rất hiếm gặp.`;
+  }
+}
+
+function applyReverseCalc() {
+  if (!reverseCalcTargetRow) return;
+  const qty = parseFloat(reverseCalcTargetRow.querySelector('.qty-input').value) || 0;
+  const tax = taxPercent(reverseCalcTargetRow.querySelector('.tax-input').value);
+  const target = parseFloat(rawMoneyValue(document.getElementById('rc_target'))) || 0;
+  if (!qty || target <= 0) return;
+  const price = reverseCalcPrice(qty, tax, target);
+  const priceInput = reverseCalcTargetRow.querySelector('.price-input');
+  priceInput.value = price.toLocaleString('vi-VN', { maximumFractionDigits: 6 }).replace(/\s/g, '');
+  calc(priceInput);
+  reverseCalcModalInstance.hide();
+}
+</script>
+<%- include('../partials/footer') %>

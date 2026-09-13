@@ -1,0 +1,21 @@
+<%- include('partials/header', {title: 'Đăng nhập', session: null}) %>
+<div class="login-box">
+  <div class="card p-4">
+    <h4 class="mb-3 text-center">IT Hoàn Hảo - ERP Lite</h4>
+    <% if (error) { %>
+      <div class="alert alert-danger py-2"><%= error %></div>
+    <% } %>
+    <form method="POST" action="/login">
+      <div class="mb-3">
+        <label class="form-label">Tên đăng nhập</label>
+        <input type="text" name="username" class="form-control" required autofocus>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Mật khẩu</label>
+        <input type="password" name="password" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+    </form>
+  </div>
+</div>
+<%- include('partials/footer') %>

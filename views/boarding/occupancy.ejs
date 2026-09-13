@@ -1,0 +1,45 @@
+<%- include('../partials/header', {title: 'Gán phòng cho người thuê'}) %>
+<h4 class="mb-3">Gán phòng cho người thuê</h4>
+
+<% rooms.forEach(room => { %>
+  <div class="card p-3 mb-3">
+    <h6>Phòng <%= room.room_name %> (<%= room.occupants.length %> người)</h6>
+    <% if (room.occupants.length) { %>
+      <ul class="mb-2">
+        <% room.occupants.forEach(o => { %>
+          <li class="mb-1">
+            <%= o.full_name %>
+            <form method="POST" action="/nhatro/occupancy/<%= o.id %>/move-out" class="d-inline" onsubmit="return confirm('Xác nhận người này đã chuyển đi khỏi phòng <%= room.room_name %>?')">
+              <button class="btn btn-sm btn-outline-danger py-0 px-1">Chuyển đi</button>
+            </form>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <div class="text-muted mb-2">Phòng đang trống.</div>
+    <% } %>
+    <form method="POST" action="/nhatro/occupancy/assign" class="row g-2">
+      <input type="hidden" name="room_id" value="<%= room.id %>">
+      <div class="col-md-6">
+        <select name="tenant_id" class="form-select form-select-sm searchable-select" data-placeholder="Gõ tên người thuê..." required>
+          <option value="">-- Chọn người thuê để gán vào phòng này --</option>
+          <% allTenants.forEach(t => { %><option value="<%= t.id %>"><%= t.full_name %></option><% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small mb-0">Ngày vào ở</label>
+        <input type="date" name="move_in_date" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-sm btn-primary w-100">Gán vào phòng</button>
+      </div>
+    </form>
+    <div class="form-text mt-1">Sau khi gán, vào <a href="/nhatro/contracts">Hợp đồng thuê trọ</a> để nhập/xem thông tin hợp đồng chung của cả phòng.</div>
+  </div>
+<% }) %>
+
+<div class="mt-3">
+  <a href="/nhatro/tenants/new" class="btn btn-outline-secondary btn-sm">+ Thêm người thuê mới trước khi gán</a>
+</div>
+
+<%- include('../partials/footer') %>

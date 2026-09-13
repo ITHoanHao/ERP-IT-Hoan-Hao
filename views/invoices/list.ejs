@@ -1,0 +1,25 @@
+<%- include('../partials/header', {title: 'Hóa đơn'}) %>
+<h4 class="mb-3">Danh sách hóa đơn</h4>
+<form method="GET" class="mb-3">
+  <input type="text" name="q" class="form-control" style="max-width:400px" placeholder="Tìm theo số hóa đơn, khách hàng, sản phẩm..." value="<%= q %>">
+</form>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Số HĐ</th><th>Khách hàng</th><th>Sản phẩm/Dịch vụ</th><th>Ngày</th><th>Trạng thái TT</th><th>Tổng tiền</th><th>Lợi nhuận</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><a href="/invoices/<%= r.id %>"><%= r.invoice_no %></a></td>
+      <td><%= r.customer_name %></td>
+      <td class="text-muted small"><%= r.items_preview || '-' %></td>
+      <td><%= formatDate(r.invoice_date) %></td>
+      <td><% if (r.payment_status === 'paid') { %><span class="badge bg-success">Đã thu</span><% } else { %><span class="badge bg-danger">Chưa thu</span><% } %></td>
+      <td><%= formatMoney(r.total_amount) %></td>
+      <td><%= formatMoney(r.profit_amount) %></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="7" class="text-muted text-center py-3">Chưa có hóa đơn nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,26 @@
+<%
+// Su dung: include('../partials/delete-modal', { deleteUrl: '/customers/5/delete', itemLabel: 'khách hàng này', modalId: 'deleteModal', backUrl: '/customers' })
+%>
+<div class="modal fade" id="<%= modalId || 'deleteModal' %>" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" method="POST" action="<%= deleteUrl %>">
+      <input type="hidden" name="_back" value="<%= backUrl || '' %>">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Xóa <%= itemLabel || 'bản ghi này' %></h5>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning py-2 mb-3">Hành động này không thể hoàn tác. Vui lòng nhập mật khẩu quản trị viên để xác nhận xóa.</div>
+        <label class="form-label">Mật khẩu quản trị viên *</label>
+        <input type="password" name="confirm_password" class="form-control" required autocomplete="off">
+        <div class="mb-2 mt-3">
+          <label class="form-label">Lý do xóa (không bắt buộc)</label>
+          <input type="text" name="delete_reason" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
+      </div>
+    </form>
+  </div>
+</div>

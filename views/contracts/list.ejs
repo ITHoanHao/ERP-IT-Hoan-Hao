@@ -1,0 +1,24 @@
+<%- include('../partials/header', {title: 'Hợp đồng'}) %>
+<h4 class="mb-3">Danh sách hợp đồng</h4>
+<div class="card p-0">
+<table class="table table-hover mb-0" data-filterable-table>
+  <thead class="table-light"><tr><th>Số hợp đồng</th><th data-filter-col="1">Khách hàng</th><th>Đơn bán</th><th>Ngày</th><th data-filter-col="4">Trạng thái</th><th>Giá trị</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><a href="/contracts/<%= r.id %>"><%= r.contract_no %></a></td>
+      <td><%= r.customer_name %></td>
+      <td><a href="/sales-orders/<%= r.so_id %>"><%= r.so_no %></a></td>
+      <td><%= formatDate(r.contract_date) %></td>
+      <td>
+        <% const st = {draft:['Nháp','secondary'],signed:['Đã ký','success'],cancelled:['Đã hủy','danger']}[r.status]; %>
+        <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+      </td>
+      <td><%= formatMoney(r.total_amount) %></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="6" class="text-muted text-center py-3">Chưa có hợp đồng nào. Hợp đồng được tạo từ trang chi tiết Đơn bán có giá trị lớn.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

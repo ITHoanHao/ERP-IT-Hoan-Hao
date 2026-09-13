@@ -1,0 +1,37 @@
+<%- include('../partials/header', {title: 'License'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Danh sách License</h4>
+  <a href="/licenses/new" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Thêm License</a>
+</div>
+<div class="card p-0">
+<table class="table table-hover mb-0" data-filterable-table>
+  <thead class="table-light"><tr><th>Mã</th><th data-filter-col="1">Người dùng cuối</th><th data-filter-col="2">Tên license</th><th>SL</th><th>Ngày hết hạn</th><th data-filter-col="5">Trạng thái</th><th>Tổng tiền</th><th></th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr class="<%= (r.status==='active' && r.daysLeft !== null && r.daysLeft <= 14) ? 'table-warning' : '' %>">
+      <td><a href="/licenses/<%= r.id %>"><%= r.license_no %></a> <% if (r.vendor_type === 'microsoft') { %><span class="badge bg-primary">MS</span><% } else if (r.vendor_type === 'autodesk') { %><span class="badge bg-danger">ADSK</span><% } %></td>
+      <td><%= r.endUserName %></td>
+      <td><%= r.license_name %></td>
+      <td><%= r.quantity %></td>
+      <td>
+        <% if (r.expiry_date) { %>
+          <%= formatDate(r.expiry_date) %>
+          <% if (r.status === 'active' && r.daysLeft !== null) { %>
+            <% if (r.daysLeft < 0) { %><span class="badge bg-danger">Đã quá hạn</span>
+            <% } else if (r.daysLeft <= 14) { %><span class="badge bg-warning text-dark">Còn <%= r.daysLeft %> ngày</span><% } %>
+          <% } %>
+        <% } else { %><span class="text-muted">Không hết hạn</span><% } %>
+      </td>
+      <td>
+        <% const st = {active:['Đang dùng','success'],expired:['Hết hạn','danger'],renewed:['Đã gia hạn','secondary'],cancelled:['Đã hủy','dark']}[r.status]; %>
+        <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+      </td>
+      <td><%= formatMoney(r.total_amount) %></td>
+      <td><a href="/licenses/<%= r.id %>/edit" class="btn btn-sm btn-outline-primary">Sửa</a></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="8" class="text-muted text-center py-3">Chưa có license nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

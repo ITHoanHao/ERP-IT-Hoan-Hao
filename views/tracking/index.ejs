@@ -1,0 +1,41 @@
+<%- include('../partials/header', {title: 'Theo dõi đơn hàng'}) %>
+<h4 class="mb-3">Theo dõi đơn hàng</h4>
+<p class="text-muted">Đơn hàng hoàn tất toàn bộ 5 bước (kể cả đính kèm hóa đơn điện tử và ghi nhận thanh toán) sẽ tự động biến mất khỏi danh sách này.</p>
+
+<% const stageLabels = ['Báo giá', 'Đặt hàng từ NCC', 'Giao hàng cho khách', 'Làm chứng từ & up hệ thống', 'Ghi nhận thanh toán']; %>
+
+<% if (orders.length === 0) { %>
+  <div class="alert alert-success">🎉 Không có đơn hàng nào đang xử lý dở — tất cả đã hoàn tất!</div>
+<% } %>
+
+<% orders.forEach(o => { %>
+  <div class="card p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div>
+        <strong><%= o.quotationNo %></strong>
+        <% if (o.soNo) { %> → <strong><%= o.soNo %></strong><% } %>
+        <span class="text-muted"> — <%= o.customerName %></span>
+        <div class="text-muted small"><%= o.itemsPreview || '-' %> &nbsp;|&nbsp; <strong><%= formatMoney(o.totalAmount) %> đ</strong></div>
+      </div>
+      <a href="<%= o.link %>" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <% ['s1','s2','s3','s4','s5'].forEach((key, idx) => { %>
+        <%
+          const state = o.stages[key];
+          const isOverdue = o.overdue[key];
+          let cls = 'bg-light text-muted border'; // chua toi
+          if (state === 'done') cls = 'bg-success text-white';
+          else if (state === 'in_progress') cls = isOverdue ? 'bg-danger text-white' : 'bg-primary text-white';
+        %>
+        <div class="rounded p-3 text-center position-relative <%= cls %>" style="min-width:130px; flex:1;">
+          <% if (isOverdue) { %><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">!</span><% } %>
+          <div class="small"><%= stageLabels[idx] %></div>
+          <% if (state === 'done') { %><i class="bi bi-check-circle-fill mt-1"></i><% } %>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+<% }) %>
+
+<%- include('../partials/footer') %>

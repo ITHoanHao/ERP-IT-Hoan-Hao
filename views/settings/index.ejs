@@ -1,0 +1,112 @@
+<%- include('../partials/header', {title: 'Cài đặt'}) %>
+<h4 class="mb-3">Cài đặt tài khoản</h4>
+
+<% if (message) { %><div class="alert alert-success"><%= message %></div><% } %>
+<% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+
+<div class="card p-3" style="max-width:500px">
+  <h6>Đổi mật khẩu</h6>
+  <div class="text-muted small mb-3">Tài khoản: <strong><%= user.username %></strong></div>
+  <form method="POST" action="/settings/password">
+    <div class="mb-3">
+      <label class="form-label">Mật khẩu hiện tại *</label>
+      <input type="password" name="current_password" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Mật khẩu mới *</label>
+      <input type="password" name="new_password" class="form-control" required minlength="4">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Xác nhận mật khẩu mới *</label>
+      <input type="password" name="confirm_password" class="form-control" required minlength="4">
+    </div>
+    <button type="submit" class="btn btn-primary">Đổi mật khẩu</button>
+  </form>
+</div>
+
+<div class="card p-3 mt-3" style="max-width:700px">
+  <h6>Thông tin công ty (dùng khi xuất PDF: Báo giá, Biên bản bàn giao, Đề nghị thanh toán, License...)</h6>
+  <form method="POST" action="/settings/company">
+    <div class="row g-3">
+      <div class="col-md-8">
+        <label class="form-label">Tên công ty</label>
+        <input type="text" name="company_name" class="form-control" value="<%= settings.company_name || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Mã số thuế</label>
+        <input type="text" name="company_tax_code" class="form-control" value="<%= settings.company_tax_code || '' %>">
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">Địa chỉ công ty</label>
+        <input type="text" name="company_address" class="form-control" value="<%= settings.company_address || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Điện thoại công ty</label>
+        <input type="text" name="company_phone" class="form-control" value="<%= settings.company_phone || '' %>">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Người nhận giấy tờ (khi đặt hàng License)</label>
+        <input type="text" name="recipient_name" class="form-control" value="<%= settings.recipient_name || '' %>">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Điện thoại người nhận giấy tờ</label>
+        <input type="text" name="recipient_phone" class="form-control" value="<%= settings.recipient_phone || '' %>">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email kế toán (nhận hóa đơn điện tử)</label>
+        <input type="email" name="accountant_email" class="form-control" value="<%= settings.accountant_email || '' %>">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email nhận thông tin bản quyền (reseller)</label>
+        <input type="email" name="reseller_license_email" class="form-control" value="<%= settings.reseller_license_email || '' %>">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Lưu thông tin công ty</button>
+  </form>
+</div>
+
+<div class="card p-3 mt-3" style="max-width:700px">
+  <h6>Thông tin chủ nhà trọ (dùng khi in Hợp đồng thuê phòng trọ — Bên A)</h6>
+  <form method="POST" action="/settings/boarding">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Họ tên chủ nhà trọ</label>
+        <input type="text" name="boarding_landlord_name" class="form-control" value="<%= settings.boarding_landlord_name || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Ngày sinh</label>
+        <input type="date" name="boarding_landlord_dob" class="form-control" value="<%= settings.boarding_landlord_dob || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Số điện thoại</label>
+        <input type="text" name="boarding_landlord_phone" class="form-control" value="<%= settings.boarding_landlord_phone || '' %>">
+      </div>
+      <div class="col-md-12">
+        <label class="form-label">Nơi đăng ký khai sinh (chủ nhà trọ)</label>
+        <input type="text" name="boarding_landlord_birth_place" class="form-control" value="<%= settings.boarding_landlord_birth_place || '' %>">
+      </div>
+      <div class="col-md-12">
+        <label class="form-label">Nơi cư trú (chủ nhà trọ)</label>
+        <input type="text" name="boarding_landlord_address" class="form-control" value="<%= settings.boarding_landlord_address || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Số CCCD (chủ nhà trọ)</label>
+        <input type="text" name="boarding_landlord_id_number" class="form-control" value="<%= settings.boarding_landlord_id_number || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Ngày cấp CCCD</label>
+        <input type="date" name="boarding_landlord_id_issue_date" class="form-control" value="<%= settings.boarding_landlord_id_issue_date || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Nơi cấp CCCD</label>
+        <input type="text" name="boarding_landlord_id_issue_place" class="form-control" value="<%= settings.boarding_landlord_id_issue_place || '' %>">
+      </div>
+      <div class="col-md-12">
+        <label class="form-label">Địa chỉ nhà trọ (nơi cho thuê)</label>
+        <input type="text" name="boarding_house_address" class="form-control" value="<%= settings.boarding_house_address || '' %>">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Lưu thông tin nhà trọ</button>
+  </form>
+</div>
+<%- include('../partials/footer') %>

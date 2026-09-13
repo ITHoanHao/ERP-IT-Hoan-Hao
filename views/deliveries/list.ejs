@@ -1,0 +1,24 @@
+<%- include('../partials/header', {title: 'Giao hàng'}) %>
+<h4 class="mb-3">Danh sách giao hàng</h4>
+<form method="GET" class="mb-3">
+  <input type="text" name="q" class="form-control" style="max-width:400px" placeholder="Tìm theo số phiếu, đơn bán, khách hàng, sản phẩm..." value="<%= q %>">
+</form>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Số phiếu</th><th>Đơn bán</th><th>Khách hàng</th><th>Sản phẩm</th><th>Ngày giao</th><th>Người nhận</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><a href="/deliveries/<%= r.id %>"><%= r.delivery_no %></a></td>
+      <td><a href="/sales-orders/<%= r.so_id %>"><%= r.so_no %></a></td>
+      <td><%= r.customer_name %></td>
+      <td class="text-muted small"><%= r.items_preview || '-' %></td>
+      <td><%= formatDate(r.delivery_date) %></td>
+      <td><%= r.received_by %></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="6" class="text-muted text-center py-3">Chưa có lượt giao hàng nào. Vào một Đơn bán đã tạo để giao hàng.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

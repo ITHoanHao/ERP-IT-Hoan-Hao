@@ -1,0 +1,24 @@
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.3.1/js/tom-select.complete.min.js"></script>
+<script src="/public/js/money-format.js"></script>
+<script src="/public/js/attr-quickadd.js"></script>
+<script src="/public/js/searchable-select.js"></script>
+<script src="/public/js/table-filter.js"></script>
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const err = params.get('err');
+  const ok = params.get('ok');
+  function showAlert(text, type) {
+    const div = document.createElement('div');
+    div.className = 'alert alert-' + type + ' alert-dismissible fade show container-fluid mt-2';
+    div.innerHTML = text.replace(/</g, '&lt;') + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+    const container = document.querySelector('.container-fluid.py-3');
+    if (container) container.parentNode.insertBefore(div, container);
+  }
+  if (err) showAlert(decodeURIComponent(err), 'danger');
+  if (ok) showAlert(decodeURIComponent(ok), 'success');
+})();
+</script>
+</html>

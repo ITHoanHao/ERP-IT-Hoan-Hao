@@ -1,0 +1,87 @@
+<%- include('../partials/header', {title: row.name}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.name %> <small class="text-muted"><%= row.phone %></small></h4>
+  <div>
+    <a href="/customers/<%= row.id %>/edit" class="btn btn-sm btn-outline-primary">Sửa thông tin</a>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card p-3">
+      <div><strong>Loại:</strong> <%= row.customer_type %></div>
+      <% if (row.customer_type === 'Doanh nghiep' && row.tax_code) { %><div><strong>MST:</strong> <%= row.tax_code %></div><% } %>
+      <div><strong>Địa chỉ:</strong> <%= row.address || '-' %></div>
+      <div><strong>Người liên hệ:</strong> <%= row.contact_person || '-' %></div>
+      <div><strong>Email:</strong> <%= row.email || '-' %></div>
+      <div><strong>Hạn mức nợ:</strong> <%= formatMoney(row.credit_limit) %> đ</div>
+      <div><strong>Thời hạn nợ:</strong> <%= row.credit_term_days %> ngày</div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card p-3 mb-3">
+      <h6>Báo giá</h6>
+      <table class="table table-sm"><thead><tr><th>Số</th><th>Ngày</th><th>Trạng thái</th><th>Tổng tiền</th></tr></thead>
+      <tbody><% quotations.forEach(q => { %>
+        <tr><td><a href="/quotations/<%= q.id %>"><%= q.quotation_no %></a></td><td><%= formatDate(q.quotation_date) %></td><td><%= q.status %></td><td><%= formatMoney(q.total_amount) %></td></tr>
+      <% }) %><% if (!quotations.length) { %><tr><td colspan="4" class="text-muted">Chưa có</td></tr><% } %></tbody></table>
+    </div>
+    <div class="card p-3 mb-3">
+      <h6>Đơn bán</h6>
+      <table class="table table-sm"><thead><tr><th>Số</th><th>Ngày</th><th>Trạng thái</th><th>Tổng tiền</th></tr></thead>
+      <tbody><% orders.forEach(o => { %>
+        <tr><td><a href="/sales-orders/<%= o.id %>"><%= o.so_no %></a></td><td><%= formatDate(o.order_date) %></td><td><%= o.status %></td><td><%= formatMoney(o.total_amount) %></td></tr>
+      <% }) %><% if (!orders.length) { %><tr><td colspan="4" class="text-muted">Chưa có</td></tr><% } %></tbody></table>
+    </div>
+    <div class="card p-3">
+      <h6>Hóa đơn & Công nợ</h6>
+      <table class="table table-sm"><thead><tr><th>Số HĐ</th><th>Ngày</th><th>Trạng thái TT</th><th>Tổng tiền</th></tr></thead>
+      <tbody><% invoices.forEach(i => { %>
+        <tr><td><a href="/invoices/<%= i.id %>"><%= i.invoice_no %></a></td><td><%= formatDate(i.invoice_date) %></td>
+        <td><% if (i.payment_status === 'paid') { %><span class="badge bg-success">Đã thu</span><% } else { %><span class="badge bg-danger">Chưa thu</span><% } %></td>
+        <td><%= formatMoney(i.total_amount) %></td></tr>
+      <% }) %><% if (!invoices.length) { %><tr><td colspan="4" class="text-muted">Chưa có</td></tr><% } %></tbody></table>
+    </div>
+  </div>
+</div>
+
+<div class="card p-3 mb-3">
+  <h6>Liên hệ email (dùng khi gửi chứng từ tổng hợp cho khách)</h6>
+  <table class="table table-sm mb-2">
+    <thead><tr><th>Email</th><th>Vai trò</th><th>Loại</th><th></th></tr></thead>
+    <tbody>
+    <% contacts.forEach(c => { %>
+      <tr>
+        <td><%= c.email %></td>
+        <td><%= c.label || '-' %></td>
+        <td><span class="badge bg-<%= c.recipient_type === 'to' ? 'primary' : 'secondary' %>"><%= c.recipient_type === 'to' ? 'To' : 'CC' %></span></td>
+        <td>
+          <form method="POST" action="/customers/<%= row.id %>/contacts/<%= c.id %>/delete" class="d-inline" onsubmit="return confirm('Xóa liên hệ này?')">
+            <button class="btn btn-sm btn-outline-danger py-0 px-1">Xóa</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+    <% if (!contacts.length) { %><tr><td colspan="4" class="text-muted">Chưa có liên hệ nào.</td></tr><% } %>
+    </tbody>
+  </table>
+  <form method="POST" action="/customers/<%= row.id %>/contacts" class="row g-2">
+    <div class="col-md-4">
+      <input type="email" name="email" class="form-control form-control-sm" placeholder="Email" required>
+    </div>
+    <div class="col-md-3">
+      <input type="text" name="label" class="form-control form-control-sm" placeholder="Vai trò (VD: Người mua hàng, Kế toán...)">
+    </div>
+    <div class="col-md-3">
+      <select name="recipient_type" class="form-select form-select-sm">
+        <option value="to">To (người nhận chính)</option>
+        <option value="cc">CC</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-primary w-100">Thêm</button>
+    </div>
+  </form>
+</div>
+<%- include('../partials/delete-modal', { deleteUrl: '/customers/' + row.id + '/delete', itemLabel: 'khách hàng "' + row.name + '"', modalId: 'delModal', backUrl: '/customers' }) %>
+<%- include('../partials/footer') %>

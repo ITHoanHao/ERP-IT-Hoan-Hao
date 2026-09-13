@@ -1,0 +1,21 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3">Chi phí vận hành — Tháng <%= month.split('-')[1] %>/<%= month.split('-')[0] %></h4>
+<p class="text-muted">Đây là các khoản bạn phải trả ra hàng tháng để vận hành nhà trọ (khác với tiền thu từ khách thuê).</p>
+<form method="POST" action="/nhatro/costs/<%= month %>">
+  <div class="card p-3">
+    <% COST_TYPES.forEach(([type, label]) => { %>
+      <div class="row g-3 mb-2 align-items-center">
+        <div class="col-md-4"><%= label %></div>
+        <div class="col-md-3">
+          <input type="number" name="amount_<%= type %>" class="form-control money-input" value="<%= byType[type] ? byType[type].amount : 0 %>">
+        </div>
+        <div class="col-md-5">
+          <input type="text" name="note_<%= type %>" class="form-control" placeholder="Ghi chú (không bắt buộc)" value="<%= byType[type] ? byType[type].note || '' : '' %>">
+        </div>
+      </div>
+    <% }) %>
+  </div>
+  <button type="submit" class="btn btn-primary mt-3">Lưu chi phí tháng này</button>
+  <a href="/nhatro?month=<%= month %>" class="btn btn-outline-secondary mt-3">Quay lại tổng quan</a>
+</form>
+<%- include('../partials/footer') %>

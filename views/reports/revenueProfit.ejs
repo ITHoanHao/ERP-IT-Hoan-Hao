@@ -1,0 +1,21 @@
+<%- include('../partials/header', {title: 'Doanh thu & Lợi nhuận'}) %>
+<h4 class="mb-3">Doanh thu & Lợi nhuận theo tháng</h4>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Tháng</th><th>Doanh thu</th><th>Giá vốn</th><th>Lợi nhuận gộp</th><th>Chi phí vận hành</th><th>Lợi nhuận ròng</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><%= r.ym %></td>
+      <td><%= formatMoney(r.revenue) %></td>
+      <td><%= formatMoney(r.cogs) %></td>
+      <td><%= formatMoney(r.profit) %></td>
+      <td class="text-danger"><%= formatMoney(r.expense) %></td>
+      <td class="fw-bold <%= r.netProfit >= 0 ? 'text-success' : 'text-danger' %>"><%= formatMoney(r.netProfit) %></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="6" class="text-muted text-center py-3">Chưa có dữ liệu.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

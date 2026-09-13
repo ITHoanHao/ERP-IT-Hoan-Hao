@@ -1,0 +1,22 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3">Bắt đầu đơn hàng mới</h4>
+<div class="card p-3" style="max-width:600px">
+  <form method="POST" action="/wizard/new">
+    <div class="mb-3">
+      <label class="form-label">Khách hàng *</label>
+      <select name="customer_id" class="form-select searchable-select" data-placeholder="Gõ tên khách hàng để tìm..." required>
+        <option value="">-- Chọn khách hàng --</option>
+        <% customers.forEach(c => { %>
+          <option value="<%= c.id %>"><%= c.name %> (<%= c.phone || '' %>)</option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Tiêu đề ngắn gọn (dùng khi gửi email) — có thể để trống, điền sau</label>
+      <input type="text" name="short_title" class="form-control" placeholder="VD: PC 12700KF B760M 16GB 3060 12GB 1TB">
+    </div>
+    <button type="submit" class="btn btn-primary">Bắt đầu → Tạo báo giá</button>
+    <a href="/wizard" class="btn btn-outline-secondary">Hủy</a>
+  </form>
+</div>
+<%- include('../partials/footer') %>

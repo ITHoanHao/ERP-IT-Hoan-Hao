@@ -1,0 +1,63 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<div class="alert alert-warning py-2">Phải giao <strong>đủ 100%</strong> số lượng của từng dòng — hệ thống không hỗ trợ giao từng phần.</div>
+<% if (typeof wizard !== 'undefined' && wizard) { %>
+  <div class="mb-2"><a href="/wizard/<%= wizard %>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại Wizard</a></div>
+<% } %>
+<form method="POST" action="/deliveries" onsubmit="return prepareSerialIds()">
+  <% if (typeof wizard !== 'undefined' && wizard) { %><input type="hidden" name="wizard" value="<%= wizard %>"><% } %>
+  <input type="hidden" name="so_id" value="<%= so.id %>">
+  <div class="card p-3 mb-3">
+    <label class="form-label">Người nhận hàng (khách)</label>
+    <input type="text" name="received_by" class="form-control" style="max-width:400px">
+  </div>
+  <div class="card p-3">
+    <h6>Chọn hàng xuất kho</h6>
+    <% lines.forEach((l, idx) => { %>
+      <div class="border rounded p-2 mb-2">
+        <div class="fw-bold"><%= l.product_name || l.description %> — cần giao: <%= l.quantity - l.quantity_delivered %></div>
+        <input type="hidden" name="so_line_id" value="<%= l.id %>">
+        <input type="hidden" name="product_id" value="<%= l.pid || '' %>">
+        <input type="hidden" name="tracking_type" value="<%= l.tracking_type || '' %>">
+        <% if (l.tracking_type === 'serial') { %>
+          <div class="row row-cols-2 row-cols-md-4 g-2 mt-1">
+          <% l.availableSerials.forEach(s => { %>
+            <div class="form-check">
+              <input class="form-check-input serial-cb" type="checkbox" data-idx="<%= idx %>" value="<%= s.id %>" id="s<%= s.id %>">
+              <label class="form-check-label" for="s<%= s.id %>"><%= s.serial_no %></label>
+            </div>
+          <% }) %>
+          </div>
+          <input type="hidden" class="serial-ids-input" name="serial_ids">
+          <input type="hidden" name="quantity" value="0">
+        <% } else if (l.tracking_type === 'quantity') { %>
+          <div class="text-muted small">Tồn khả dụng: <%= l.totalAvailable %></div>
+          <input type="number" name="quantity" class="form-control form-control-sm" style="max-width:150px" value="<%= l.quantity - l.quantity_delivered %>">
+          <input type="hidden" name="serial_ids" value="">
+        <% } else { %>
+          <input type="hidden" name="quantity" value="<%= l.quantity - l.quantity_delivered %>">
+          <input type="hidden" name="serial_ids" value="">
+        <% } %>
+      </div>
+    <% }) %>
+  </div>
+  <div class="mt-3">
+    <button type="submit" class="btn btn-success">Xác nhận giao hàng (tự động xuất hóa đơn)</button>
+    <a href="/sales-orders/<%= so.id %>" class="btn btn-outline-secondary">Hủy</a>
+  </div>
+</form>
+<script>
+function prepareSerialIds() {
+  const groups = {};
+  document.querySelectorAll('.serial-cb:checked').forEach(cb => {
+    groups[cb.dataset.idx] = groups[cb.dataset.idx] || [];
+    groups[cb.dataset.idx].push(cb.value);
+  });
+  document.querySelectorAll('.border.rounded').forEach((div, idx) => {
+    const input = div.querySelector('.serial-ids-input');
+    if (input) input.value = (groups[idx] || []).join(',');
+  });
+  return true;
+}
+</script>
+<%- include('../partials/footer') %>

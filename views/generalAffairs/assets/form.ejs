@@ -1,0 +1,101 @@
+<%- include('../../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<form method="POST" action="<%= row.id ? '/tongvu/assets/' + row.id : '/tongvu/assets' %>">
+  <div class="card p-3 mb-3">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Mã tài sản</label>
+        <input type="text" class="form-control" value="<%= code %>" disabled>
+      </div>
+      <div class="col-md-9">
+        <label class="form-label">Tên tài sản *</label>
+        <input type="text" name="asset_name" class="form-control" required value="<%= row.asset_name || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Nhóm tài sản</label>
+        <input type="text" name="category" class="form-control" value="<%= row.category || '' %>" placeholder="VD: Laptop, Màn hình, Bàn ghế...">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Số lượng</label>
+        <input type="number" name="quantity" class="form-control" value="<%= row.quantity || 1 %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Số serial/IMEI</label>
+        <input type="text" name="serial_no" class="form-control" value="<%= row.serial_no || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Nhà cung cấp</label>
+        <select name="supplier_id" class="form-select searchable-select" data-placeholder="Gõ tên nhà cung cấp...">
+          <option value="">-- Chọn --</option>
+          <% suppliers.forEach(s => { %><option value="<%= s.id %>" <%= row.supplier_id === s.id ? 'selected' : '' %>><%= s.name %></option><% }) %>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h6>Thông tin mua & khấu hao</h6>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Ngày mua</label>
+        <input type="date" name="purchase_date" class="form-control" value="<%= row.purchase_date || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Số hóa đơn mua</label>
+        <input type="text" name="purchase_invoice_no" class="form-control" value="<%= row.purchase_invoice_no || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Nguyên giá</label>
+        <input type="number" name="purchase_cost" class="form-control money-input" value="<%= row.purchase_cost || 0 %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Thời gian khấu hao (tháng)</label>
+        <input type="number" name="useful_life_months" class="form-control" value="<%= row.useful_life_months || 36 %>">
+        <div class="form-text">Mặc định 36 tháng (3 năm)</div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Bảo hành đến ngày</label>
+        <input type="date" name="warranty_until" class="form-control" value="<%= row.warranty_until || '' %>">
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h6>Cấp phát sử dụng</h6>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Người đang sử dụng</label>
+        <select name="current_user_id" class="form-select searchable-select" data-placeholder="Gõ tên nhân viên...">
+          <option value="">-- Chưa cấp phát --</option>
+          <% employees.forEach(e => { %><option value="<%= e.id %>" <%= row.current_user_id === e.id ? 'selected' : '' %>><%= e.full_name %></option><% }) %>
+        </select>
+        <% if (!employees.length) { %><div class="form-text">Chưa có nhân viên nào — <a href="/tongvu/employees/new" target="_blank">thêm nhân viên</a> trước.</div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Địa chỉ/Chi nhánh sử dụng</label>
+        <input type="text" name="location" class="form-control" value="<%= row.location || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Ngày cấp phát</label>
+        <input type="date" name="assigned_date" class="form-control" value="<%= row.assigned_date || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Tình trạng</label>
+        <select name="status" class="form-select">
+          <option value="in_use" <%= (!row.status || row.status === 'in_use') ? 'selected' : '' %>>Đang sử dụng</option>
+          <option value="broken" <%= row.status === 'broken' ? 'selected' : '' %>>Hỏng - chờ sửa</option>
+          <option value="in_stock" <%= row.status === 'in_stock' ? 'selected' : '' %>>Trong kho chưa cấp phát</option>
+          <option value="disposed" <%= row.status === 'disposed' ? 'selected' : '' %>>Đã thanh lý</option>
+          <option value="lost" <%= row.status === 'lost' ? 'selected' : '' %>>Thất lạc</option>
+        </select>
+      </div>
+      <div class="col-md-12">
+        <label class="form-label">Ghi chú</label>
+        <textarea name="note" class="form-control"><%= row.note || '' %></textarea>
+      </div>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">Lưu</button>
+  <a href="/tongvu/assets" class="btn btn-outline-secondary">Hủy</a>
+</form>
+<%- include('../../partials/footer') %>

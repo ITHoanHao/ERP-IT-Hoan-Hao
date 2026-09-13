@@ -1,0 +1,28 @@
+<%- include('../partials/header', {title: 'Sản phẩm'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Danh sách sản phẩm</h4>
+  <a href="/products/new" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Thêm sản phẩm</a>
+</div>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-4"><input type="text" name="q" class="form-control" placeholder="Tìm theo tên/mã..." value="<%= q %>"></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Tìm</button></div>
+</form>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Mã SP</th><th>Tên</th><th>Loại quản lý</th><th>ĐVT</th><th>Trạng thái</th><th></th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><a href="/products/<%= r.id %>"><%= r.sku %></a></td>
+      <td><%= r.name %></td>
+      <td><% if (r.tracking_type === 'serial') { %><span class="badge bg-primary">Theo Serial</span><% } else { %><span class="badge bg-secondary">Theo số lượng</span><% } %></td>
+      <td><%= r.unit %></td>
+      <td><% if (r.is_active) { %><span class="badge bg-success">Kinh doanh</span><% } else { %><span class="badge bg-secondary">Ngừng</span><% } %></td>
+      <td><a href="/products/<%= r.id %>/edit" class="btn btn-sm btn-outline-primary">Sửa</a></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="6" class="text-muted text-center py-3">Không có sản phẩm nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,25 @@
+<%- include('../partials/header', {title: row.delivery_no}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.delivery_no %></h4>
+  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+</div>
+<div class="card p-3 mb-3">
+  <div><strong>Đơn bán:</strong> <a href="/sales-orders/<%= row.so_id %>"><%= row.so_no %></a></div>
+  <div><strong>Khách hàng:</strong> <%= row.customer_name %></div>
+  <div><strong>Ngày giao:</strong> <%= formatDate(row.delivery_date) %></div>
+  <% if (row.received_by) { %><div><strong>Người nhận:</strong> <%= row.received_by %></div><% } %>
+</div>
+<div class="card p-3">
+  <h6>Chi tiết hàng đã giao</h6>
+  <table class="table table-sm">
+    <thead><tr><th>Sản phẩm</th><th>Serial/Lô</th><th>Số lượng</th></tr></thead>
+    <tbody>
+    <% lines.forEach(l => { %>
+      <tr><td><%= l.product_name %></td><td><%= l.serial_id ? ('Serial #' + l.serial_id) : ('Lô #' + l.batch_id) %></td><td><%= l.quantity %></td></tr>
+    <% }) %>
+    </tbody>
+  </table>
+  <div class="alert alert-success mb-0">Hóa đơn đã được tự động tạo. <a href="/sales-orders/<%= row.so_id %>">Xem đơn bán</a> để lấy link hóa đơn.</div>
+</div>
+<%- include('../partials/delete-modal', { deleteUrl: '/deliveries/' + row.id + '/delete', itemLabel: 'phiếu giao hàng "' + row.delivery_no + '"', modalId: 'delModal', backUrl: '/deliveries/' + row.id }) %>
+<%- include('../partials/footer') %>

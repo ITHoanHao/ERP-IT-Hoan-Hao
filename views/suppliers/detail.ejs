@@ -1,0 +1,30 @@
+<%- include('../partials/header', {title: row.name}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.name %></h4>
+  <div>
+    <a href="/suppliers/<%= row.id %>/edit" class="btn btn-sm btn-outline-primary">Sửa thông tin</a>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card p-3">
+      <div><strong>SĐT:</strong> <%= row.phone || '-' %></div>
+      <% if (row.tax_code) { %><div><strong>MST:</strong> <%= row.tax_code %></div><% } %>
+      <div><strong>Địa chỉ:</strong> <%= row.address || '-' %></div>
+      <div><strong>Người liên hệ:</strong> <%= row.contact_person || '-' %></div>
+      <div><strong>Công nợ:</strong> <%= row.is_credit_allowed ? 'Có' : 'Không' %></div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card p-3">
+      <h6>Đơn mua hàng</h6>
+      <table class="table table-sm"><thead><tr><th>Số</th><th>Ngày</th><th>Trạng thái</th><th>Tổng tiền</th></tr></thead>
+      <tbody><% orders.forEach(o => { %>
+        <tr><td><a href="/purchase-orders/<%= o.id %>"><%= o.po_no %></a></td><td><%= formatDate(o.order_date) %></td><td><%= o.status %></td><td><%= formatMoney(o.total_amount) %></td></tr>
+      <% }) %><% if (!orders.length) { %><tr><td colspan="4" class="text-muted">Chưa có</td></tr><% } %></tbody></table>
+    </div>
+  </div>
+</div>
+<%- include('../partials/delete-modal', { deleteUrl: '/suppliers/' + row.id + '/delete', itemLabel: 'nhà cung cấp "' + row.name + '"', modalId: 'delModal', backUrl: '/suppliers' }) %>
+<%- include('../partials/footer') %>

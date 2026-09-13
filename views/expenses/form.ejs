@@ -1,0 +1,37 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<div class="card p-3" style="max-width:600px">
+<form method="POST" action="/expenses" enctype="multipart/form-data">
+  <div class="mb-3">
+    <label class="form-label">Loại chi phí *</label>
+    <input type="text" name="category" class="form-control" required placeholder="VD: Thuê kế toán ngoài, Công tác phí...">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Số tiền *</label>
+    <input type="number" name="amount" class="form-control money-input" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Diễn giải</label>
+    <textarea name="description" class="form-control"></textarea>
+  </div>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Hình thức chi</label>
+      <select name="payment_method" class="form-select"><option value="cash">Tiền mặt</option><option value="bank">Chuyển khoản</option></select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Nguồn quỹ</label>
+      <select name="fund_source" class="form-select"><option value="cash">Quỹ tiền mặt</option><option value="bank">Tài khoản ngân hàng</option></select>
+    </div>
+  </div>
+  <div class="mb-3 mt-3">
+    <label class="form-label">Hóa đơn/Chứng từ đính kèm (không bắt buộc ngay bây giờ)</label>
+    <input type="file" name="receipt_file" class="form-control" accept=".pdf,image/*">
+    <div class="form-text">Có thể để trống và đính kèm sau — hệ thống sẽ nhắc trên Dashboard cho đến khi bạn đính kèm.</div>
+  </div>
+  <div class="form-text mb-3">Chi phí này được coi là đã chi thực tế ngay khi ghi nhận (hệ thống tự động tạo phiếu chi tương ứng).</div>
+  <button type="submit" class="btn btn-primary">Lưu</button>
+  <a href="/payments" class="btn btn-outline-secondary">Hủy</a>
+</form>
+</div>
+<%- include('../partials/footer') %>

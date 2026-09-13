@@ -1,0 +1,22 @@
+<%- include('../partials/header', {title: 'Chi phí'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Chi phí vận hành</h4>
+  <a href="/expenses/new" class="btn btn-primary btn-sm">+ Ghi nhận chi phí</a>
+</div>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Số phiếu</th><th>Loại chi phí</th><th>Ngày</th><th>Số tiền</th><th>Diễn giải</th><th>Hóa đơn</th><th></th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr><td><a href="/expenses/<%= r.id %>"><%= r.expense_no %></a></td><td><%= r.category %></td><td><%= formatDate(r.expense_date) %></td><td><%= formatMoney(r.amount) %></td><td><%= r.description %></td>
+    <td><% if (r.hasAttachment) { %><span class="badge bg-success">Đã đính kèm</span><% } else { %><span class="badge bg-warning text-dark">Thiếu hóa đơn</span><% } %></td>
+    <td><button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal<%= r.id %>">Xóa</button></td></tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="7" class="text-muted text-center py-3">Chưa có chi phí nào.</td></tr><% } %>
+  </tbody>
+</table>
+<% rows.forEach(r => { %>
+  <%- include('../partials/delete-modal', { deleteUrl: '/expenses/' + r.id + '/delete', itemLabel: 'chi phí "' + r.expense_no + '"', modalId: 'delModal' + r.id, backUrl: '/expenses' }) %>
+<% }) %>
+</div>
+<%- include('../partials/footer') %>

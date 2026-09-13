@@ -1,0 +1,64 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3">Nhập số điện & tính tiền phòng — Tháng <%= month.split('-')[1] %>/<%= month.split('-')[0] %></h4>
+<p class="text-muted">Số điện cũ tự động lấy từ số điện mới của tháng trước (nếu có). Số người mặc định lấy theo số người đang ở phòng — có thể sửa lại nếu tháng này khác (VD: chưa dùng máy giặt).</p>
+
+<form method="POST" action="/nhatro/billing/<%= month %>">
+<% rooms.forEach(r => { %>
+  <div class="card p-3 mb-3">
+    <h6>Phòng <%= r.room_name %> <span class="text-muted small">(hiện có <%= r.occupantCount %> người ở)</span>
+      <% if (r.bill) { %><span class="badge bg-<%= r.bill.payment_status === 'paid' ? 'success' : 'secondary' %> float-end"><%= r.bill.payment_status === 'paid' ? 'Đã thu' : 'Đã tính, chưa thu' %></span><% } %>
+    </h6>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Giá phòng</label>
+        <input type="number" name="room_price_<%= r.id %>" class="form-control money-input" value="<%= r.bill ? r.bill.room_price : r.room_price %>">
+      </div>
+      <% if (r.has_electricity_meter) { %>
+        <div class="col-md-2">
+          <label class="form-label">Số điện cũ</label>
+          <input type="number" name="old_<%= r.id %>" class="form-control" step="any" value="<%= r.bill ? r.bill.electricity_old : (r.prevElectricityNew !== null && r.prevElectricityNew !== undefined ? r.prevElectricityNew : '') %>">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Số điện mới *</label>
+          <input type="number" name="new_<%= r.id %>" class="form-control" step="any" value="<%= r.bill ? r.bill.electricity_new : '' %>">
+        </div>
+        <% if (r.electricity_deduct_room_ids) { %>
+          <div class="col-md-5"><div class="form-text mt-4">Tự động trừ số điện của phòng đã cấu hình (VD Phòng 3 + Phòng 4) — không cần tính tay.</div></div>
+        <% } %>
+      <% } else { %>
+        <div class="col-md-4"><div class="form-text mt-4">Phòng không có đồng hồ điện — tự tính <%= formatMoney(r.flat_electricity_per_person) %>đ/người theo số người tính nước bên dưới.</div></div>
+      <% } %>
+
+      <div class="col-md-2">
+        <label class="form-label">Số người tính nước</label>
+        <input type="number" name="water_occ_<%= r.id %>" class="form-control" value="<%= r.bill ? r.bill.water_occupants : r.occupantCount %>">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Số người dùng máy giặt</label>
+        <input type="number" name="laundry_occ_<%= r.id %>" class="form-control" value="<%= r.bill ? r.bill.laundry_occupants : 0 %>">
+      </div>
+      <% if (!r.management_fee_bundled) { %>
+      <div class="col-md-2">
+        <label class="form-label">Số người tính phí QL</label>
+        <input type="number" name="mgmt_occ_<%= r.id %>" class="form-control" value="<%= r.bill ? r.bill.management_occupants : r.occupantCount %>">
+      </div>
+      <% } %>
+      <div class="col-md-2">
+        <label class="form-label">Chi phí khác</label>
+        <input type="number" name="misc_<%= r.id %>" class="form-control money-input" value="<%= r.bill ? r.bill.misc_amount : 0 %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Ghi chú chi phí khác</label>
+        <input type="text" name="misc_note_<%= r.id %>" class="form-control" value="<%= r.bill ? r.bill.misc_note || '' : '' %>">
+      </div>
+    </div>
+    <% if (r.bill) { %>
+      <div class="text-end mt-2 fw-bold">Tổng cộng đã tính: <%= formatMoney(r.bill.total_amount) %> đ</div>
+    <% } %>
+  </div>
+<% }) %>
+
+<button type="submit" class="btn btn-primary">Lưu & Tính tiền tất cả các phòng</button>
+<a href="/nhatro?month=<%= month %>" class="btn btn-outline-secondary">Quay lại tổng quan</a>
+</form>
+<%- include('../partials/footer') %>

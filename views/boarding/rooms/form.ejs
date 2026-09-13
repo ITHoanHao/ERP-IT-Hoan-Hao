@@ -1,0 +1,74 @@
+<%- include('../../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<form method="POST" action="<%= row.id ? '/nhatro/rooms/' + row.id : '/nhatro/rooms' %>">
+  <div class="card p-3 mb-3">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Tên phòng *</label>
+        <input type="text" name="room_name" class="form-control" required value="<%= row.room_name || '' %>" placeholder="VD: 1, 2, Trệt...">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Giá phòng (đ/tháng)</label>
+        <input type="number" name="room_price" class="form-control money-input" value="<%= row.room_price || 0 %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Thứ tự hiển thị</label>
+        <input type="number" name="display_order" class="form-control" value="<%= row.display_order || 0 %>">
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h6>Cách tính tiền điện</h6>
+    <div class="form-check form-switch mb-2">
+      <input class="form-check-input" type="checkbox" name="has_electricity_meter" id="hasE" <%= (row.has_electricity_meter === undefined || row.has_electricity_meter) ? 'checked' : '' %> onchange="toggleElec()">
+      <label class="form-check-label" for="hasE">Phòng có đồng hồ điện riêng (tính theo số điện thực tế, 3.000đ/số)</label>
+    </div>
+    <div id="flatSection" class="<%= (row.has_electricity_meter === undefined || row.has_electricity_meter) ? 'd-none' : '' %>">
+      <label class="form-label">Giá điện cố định (đ/người/tháng) — dùng khi KHÔNG có đồng hồ</label>
+      <input type="number" name="flat_electricity_per_person" class="form-control money-input" style="max-width:250px" value="<%= row.flat_electricity_per_person || 50000 %>">
+    </div>
+    <div class="row g-3 mt-2">
+      <div class="col-md-6">
+        <label class="form-label">Giảm giá điện cố định mỗi tháng (nếu có)</label>
+        <input type="number" name="electricity_discount" class="form-control money-input" value="<%= row.electricity_discount || 0 %>">
+      </div>
+      <% if (allRooms && allRooms.length) { %>
+      <div class="col-md-6">
+        <label class="form-label">Trừ số điện của phòng khác (nếu có, VD Phòng 6 trừ Phòng 3+4)</label>
+        <select name="deduct_room_ids" class="form-select" multiple size="4">
+          <% allRooms.forEach(r => { %>
+            <option value="<%= r.id %>" <%= (deductIds || []).includes(r.id) ? 'selected' : '' %>>Phòng <%= r.room_name %></option>
+          <% }) %>
+        </select>
+        <div class="form-text">Giữ Ctrl để chọn nhiều phòng.</div>
+      </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" name="management_fee_bundled" <%= row.management_fee_bundled ? 'checked' : '' %>>
+      <label class="form-check-label">Phí quản lý đã gộp vào tiền phòng (không tính riêng)</label>
+    </div>
+  </div>
+
+  <% if (row.id) { %>
+  <div class="card p-3 mb-3">
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" name="is_active" <%= row.is_active ? 'checked' : '' %>>
+      <label class="form-check-label">Đang sử dụng</label>
+    </div>
+  </div>
+  <% } %>
+
+  <button type="submit" class="btn btn-primary">Lưu</button>
+  <a href="/nhatro/rooms" class="btn btn-outline-secondary">Hủy</a>
+</form>
+<script>
+function toggleElec() {
+  document.getElementById('flatSection').classList.toggle('d-none', document.getElementById('hasE').checked);
+}
+</script>
+<%- include('../../partials/footer') %>

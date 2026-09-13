@@ -1,0 +1,504 @@
+<%- include('../partials/header', {title: title}) %>
+<% const wizardQs = (typeof wizard !== 'undefined' && wizard) ? ('?wizard=' + wizard) : ''; %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><%= title %></h4>
+  <% if (wizardQs) { %><a href="/wizard/<%= wizard %>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại Wizard</a><% } %>
+</div>
+<form method="POST" action="<%= (row ? '/quotations/' + row.id : '/quotations') + wizardQs %>">
+  <div class="card p-3 mb-3">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Khách hàng *</label>
+        <select name="customer_id" class="form-select searchable-select" data-placeholder="Gõ tên khách hàng để tìm..." required>
+          <option value="">-- Chọn khách hàng --</option>
+          <% customers.forEach(c => { %>
+            <option value="<%= c.id %>" <%= row && row.customer_id === c.id ? 'selected' : '' %>><%= c.name %> (<%= c.phone || '' %>)</option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Hiệu lực đến</label>
+        <input type="date" name="valid_until" class="form-control" value="<%= row && row.valid_until ? row.valid_until : '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Tiêu đề ngắn gọn (dùng khi gửi email)</label>
+        <input type="text" name="short_title" class="form-control" value="<%= row && row.short_title ? row.short_title : '' %>" placeholder="VD: Chi phí sửa chữa điện thoại A07">
+      </div>
+      <div class="col-md-12">
+        <label class="form-label">Ghi chú</label>
+        <input type="text" name="note" class="form-control" value="<%= row ? row.note || '' : '' %>">
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <div class="d-flex justify-content-between">
+      <h6>Chi tiết sản phẩm/dịch vụ</h6>
+      <button type="button" class="btn btn-sm btn-outline-primary" onclick="addLine()">+ Thêm dòng</button>
+    </div>
+    <table class="table table-sm" id="lineTable">
+      <thead><tr><th style="width:3%"></th><th style="width:19%">Sản phẩm *</th><th>Ghi chú thêm</th><th style="width:7%">SL</th><th style="width:12%">Đơn giá (chưa VAT)</th><th style="width:8%">BH (tháng)</th><th style="width:8%">Thuế (%)</th><th style="width:13%">Thành tiền (chưa VAT)</th><th></th></tr></thead>
+      <tbody id="lineBody"></tbody>
+    </table>
+    <div class="text-end mt-2" id="totalsBox"></div>
+  </div>
+  <button type="submit" class="btn btn-primary">Lưu báo giá</button>
+  <a href="/quotations" class="btn btn-outline-secondary">Hủy</a>
+</form>
+
+<template id="lineTpl">
+  <tr>
+    <td class="text-center align-middle drag-handle-cell" style="cursor:grab; width:3%;" title="Kéo để đổi thứ tự">
+      <i class="bi bi-grip-vertical text-muted"></i>
+    </td>
+    <td>
+      <select name="line_product" class="form-select form-select-sm prod-select searchable-select" data-placeholder="Gõ tên sản phẩm để tìm..." required onchange="handleProductSelect(this)">
+        <option value="" disabled selected>-- Chọn sản phẩm --</option>
+        <option value="__new__" class="fw-bold text-primary">+ Thêm sản phẩm mới...</option>
+        <% products.forEach(p => { %><option value="<%= p.id %>"><%= p.name %></option><% }) %>
+      </select>
+    </td>
+    <td><textarea name="line_desc" class="form-control form-control-sm desc-input" rows="2" placeholder="Ghi chú thêm về sản phẩm (có thể xuống dòng)"></textarea></td>
+    <td><input type="number" name="line_qty" class="form-control form-control-sm qty-input" value="1" min="0" step="any" onchange="calc(this)"></td>
+    <td>
+      <div class="input-group input-group-sm">
+        <input type="text" name="line_price" class="form-control price-input money-input-decimal" value="0" onchange="calc(this)">
+        <button type="button" class="btn btn-outline-secondary" title="Tính đơn giá từ tổng tiền mong muốn" onclick="openReverseCalc(this)"><i class="bi bi-calculator"></i></button>
+      </div>
+    </td>
+    <td><input type="number" name="line_warranty" class="form-control form-control-sm" value="0"></td>
+    <td><input type="number" name="line_tax" class="form-control form-control-sm tax-input" value="<%= settings && settings.default_tax_rate_percent || 8 %>" min="0" onchange="calc(this)"></td>
+    <td><span class="line-amount">0</span></td>
+    <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">×</button></td>
+  </tr>
+</template>
+
+<!-- Modal them san pham nhanh - day du truong nhu man hinh Them san pham chinh thuc -->
+<div class="modal fade" id="quickAddProductModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Thêm sản phẩm mới</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="quickAddError" class="alert alert-danger py-2 d-none"></div>
+        <div class="row g-3">
+          <div class="col-md-12">
+            <label class="form-label">Tên sản phẩm *</label>
+            <input type="text" id="qa_name" class="form-control" required autofocus>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nhập từ nhà cung cấp nào?</label>
+            <select id="qa_supplier_id" class="form-select searchable-select" data-placeholder="Gõ tên nhà cung cấp để tìm..." onchange="handleSupplierSelect(this)">
+              <option value="">-- Chọn nhà cung cấp --</option>
+              <% suppliers.forEach(s => { %><option value="<%= s.id %>"><%= s.name %></option><% }) %>
+              <option value="__add_new__" class="fw-bold text-primary">+ Thêm nhà cung cấp mới...</option>
+            </select>
+          </div>
+          <div class="col-md-6"></div>
+          <div class="col-md-6">
+            <label class="form-label">Nhóm sản phẩm</label>
+            <select id="qa_category" class="form-select" data-attr-type="category" onchange="handleAttrSelect(this, 'category', quickAddModal)">
+              <option value="">-- Chọn nhóm --</option>
+              <% categories.forEach(c => { %><option value="<%= c %>"><%= c %></option><% }) %>
+              <option value="__add_new__" class="fw-bold text-primary">+ Thêm nhóm mới...</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Thương hiệu</label>
+            <select id="qa_brand" class="form-select" data-attr-type="brand" onchange="handleAttrSelect(this, 'brand', quickAddModal)">
+              <option value="">-- Chọn thương hiệu --</option>
+              <% brands.forEach(b => { %><option value="<%= b %>"><%= b %></option><% }) %>
+              <option value="__add_new__" class="fw-bold text-primary">+ Thêm thương hiệu mới...</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Hình thức quản lý tồn kho *</label>
+            <select id="qa_tracking_type" class="form-select">
+              <option value="quantity">Theo số lượng</option>
+              <option value="serial">Theo Serial (từng máy)</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Đơn vị tính</label>
+            <select id="qa_unit" class="form-select" data-attr-type="unit" onchange="handleAttrSelect(this, 'unit', quickAddModal)">
+              <% units.forEach(u => { %><option value="<%= u %>" <%= u === 'Cái' ? 'selected' : '' %>><%= u %></option><% }) %>
+              <option value="__add_new__" class="fw-bold text-primary">+ Thêm đơn vị tính mới...</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Mức tồn kho tối thiểu</label>
+            <input type="number" id="qa_min_stock" class="form-control" value="0">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Bảo hành mặc định (tháng)</label>
+            <input type="number" id="qa_warranty" class="form-control" value="0">
+          </div>
+        </div>
+        <div class="form-text mt-2">Mã sản phẩm (SKU) sẽ được hệ thống tự động sinh.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" onclick="submitQuickAddProduct()">Lưu & chọn</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="quickAddSupplierModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Thêm nhà cung cấp mới</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="qaSupplierError" class="alert alert-danger py-2 d-none"></div>
+        <label class="form-label">Tên nhà cung cấp *</label>
+        <input type="text" id="qa_supplier_name" class="form-control" autofocus>
+        <div class="form-text">Thông tin khác (địa chỉ, SĐT, MST...) có thể bổ sung sau tại trang Nhà cung cấp.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" onclick="submitQuickAddSupplier()">Lưu & chọn</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let quickAddTargetSelect = null;
+let quickAddModal = null;
+let quickAddSupplierModal = null;
+document.addEventListener('DOMContentLoaded', () => {
+  const modalEl = document.getElementById('quickAddProductModal');
+  quickAddModal = new bootstrap.Modal(modalEl);
+  // Khoi tao lai Tom Select luc modal thuc su hien ra, tranh loi do vi tri/kich thuoc khi modal dang an
+  modalEl.addEventListener('shown.bs.modal', () => initSearchableSelects(modalEl));
+
+  quickAddSupplierModal = new bootstrap.Modal(document.getElementById('quickAddSupplierModal'));
+});
+
+function handleSupplierSelect(selectEl) {
+  if (selectEl.value !== '__add_new__') return;
+  selectEl.tomselect ? selectEl.tomselect.setValue('') : (selectEl.value = '');
+  document.getElementById('qa_supplier_name').value = '';
+  document.getElementById('qaSupplierError').classList.add('d-none');
+  quickAddSupplierModal.show();
+}
+
+async function submitQuickAddSupplier() {
+  const name = document.getElementById('qa_supplier_name').value.trim();
+  const errBox = document.getElementById('qaSupplierError');
+  if (!name) { errBox.textContent = 'Vui lòng nhập tên nhà cung cấp.'; errBox.classList.remove('d-none'); return; }
+  try {
+    const res = await fetch('/suppliers/quick-add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ name }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errBox.textContent = data.error || 'Có lỗi xảy ra.'; errBox.classList.remove('d-none'); return; }
+    const supplierSelect = document.getElementById('qa_supplier_id');
+    const opt = document.createElement('option');
+    opt.value = data.id;
+    opt.textContent = data.name;
+    supplierSelect.insertBefore(opt, supplierSelect.lastElementChild); // chen truoc dong "+ Them nha cung cap moi..."
+    if (supplierSelect.tomselect) {
+      supplierSelect.tomselect.addOption({ value: String(data.id), text: data.name });
+      supplierSelect.tomselect.setValue(String(data.id));
+      supplierSelect.tomselect.setTextboxValue('');
+    } else {
+      supplierSelect.value = data.id;
+    }
+    quickAddSupplierModal.hide();
+  } catch (e) {
+    errBox.textContent = 'Lỗi kết nối: ' + e.message;
+    errBox.classList.remove('d-none');
+  }
+}
+
+function handleProductSelect(select) {
+  if (select.value === '__new__') {
+    quickAddTargetSelect = select;
+    tsSetValue(select, '');
+    document.getElementById('qa_name').value = '';
+    tsSetValue(document.getElementById('qa_supplier_id'), '');
+    document.getElementById('qa_category').value = '';
+    document.getElementById('qa_brand').value = '';
+    document.getElementById('qa_tracking_type').value = 'quantity';
+    document.getElementById('qa_min_stock').value = 0;
+    document.getElementById('qa_warranty').value = 0;
+    document.getElementById('qa_unit').value = 'Cái';
+    document.getElementById('quickAddError').classList.add('d-none');
+    quickAddModal.show();
+    setTimeout(() => document.getElementById('qa_name').focus(), 300);
+  }
+}
+
+async function submitQuickAddProduct() {
+  const name = document.getElementById('qa_name').value.trim();
+  const errBox = document.getElementById('quickAddError');
+  const unit = document.getElementById('qa_unit').value;
+  if (!name) {
+    errBox.textContent = 'Vui lòng nhập tên sản phẩm.';
+    errBox.classList.remove('d-none');
+    return;
+  }
+
+  const payload = {
+    name,
+    supplier_id: document.getElementById('qa_supplier_id').value,
+    category: document.getElementById('qa_category').value,
+    brand: document.getElementById('qa_brand').value,
+    tracking_type: document.getElementById('qa_tracking_type').value,
+    unit,
+    min_stock_level: document.getElementById('qa_min_stock').value || 0,
+    warranty_months_default: document.getElementById('qa_warranty').value || 0,
+  };
+
+  try {
+    const res = await fetch('/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+      body: new URLSearchParams(payload),
+    });
+    if (!res.ok) throw new Error('Lỗi máy chủ');
+    const data = await res.json();
+
+    // QUAN TRONG: phai loc ro la the <select> (khong chi dua vao class ".prod-select"),
+    // vi Tom Select tu dong sao chep nguyen class cua <select> goc sang ca <div> boc ngoai no
+    // (div.ts-wrapper) -> neu chi loc theo class se quet trung ca div do, khien tsAddOption()
+    // tuong day la select thuong roi nhet nham 1 the <option> roi vao trong div (khong phai
+    // trong select), va <option> nam ngoai <select> lai bi trinh duyet hien ra nhu chu thuong,
+    // gay hien tuong "chu la sinh ra o moi dong" khi tao san pham moi.
+    document.querySelectorAll('select.prod-select').forEach(sel => {
+      tsAddOption(sel, data.id, data.name);
+    });
+    const tpl = document.getElementById('lineTpl');
+    const tplOpt = document.createElement('option');
+    tplOpt.value = data.id;
+    tplOpt.textContent = data.name;
+    tpl.content.querySelector('select.prod-select').appendChild(tplOpt);
+
+    if (quickAddTargetSelect) {
+      tsSetValue(quickAddTargetSelect, data.id);
+    }
+    quickAddModal.hide();
+  } catch (e) {
+    errBox.textContent = 'Không thể tạo sản phẩm: ' + e.message;
+    errBox.classList.remove('d-none');
+  }
+}
+</script>
+
+<script>
+const existingLines = <%- JSON.stringify(lines.map(l => ({product_id: l.product_id, description: l.description, quantity: l.quantity, unit_price: l.unit_price, warranty_months: l.warranty_months, tax_rate_percent: l.tax_rate_percent}))) %>;
+const defaultTax = <%= settings && settings.default_tax_rate_percent || 8 %>;
+
+function addLine(data) {
+  const tpl = document.getElementById('lineTpl');
+  const clone = tpl.content.cloneNode(true);
+  const tr = clone.querySelector('tr');
+  if (data) {
+    tr.querySelector('select.prod-select').value = data.product_id || '';
+    tr.querySelector('.desc-input').value = data.description || '';
+    tr.querySelector('.qty-input').value = data.quantity;
+    tr.querySelector('.price-input').value = String(data.unit_price).replace('.', ',');
+    tr.querySelector('[name="line_warranty"]').value = data.warranty_months || 0;
+    tr.querySelector('.tax-input').value = data.tax_rate_percent != null ? data.tax_rate_percent : defaultTax;
+  }
+  document.getElementById('lineBody').appendChild(clone);
+  const addedRow = document.getElementById('lineBody').lastElementChild;
+  initSearchableSelects(addedRow);
+  attachMoneyFormatting(addedRow);
+  addedRow.querySelector('.money-input-decimal').addEventListener('money-changed', () => calcAllRow(addedRow));
+  calcAllRow(addedRow);
+  initRowDragHandle(addedRow);
+}
+
+// ==== Keo-tha doi thu tu dong san pham ====
+// Chi cho phep bat dau keo tu icon "cam" (drag-handle-cell), khong phai ca dong,
+// de tranh vuong khi bam chon chu/thao tac trong o Ghi chu, SL, Don gia...
+let dragRow = null;
+function initRowDragHandle(tr) {
+  const handle = tr.querySelector('.drag-handle-cell');
+  if (!handle) return;
+  handle.addEventListener('mousedown', () => { tr.draggable = true; });
+  document.addEventListener('mouseup', () => {
+    if (!dragRow) tr.draggable = false; // neu ket thuc ma khong keo thuc su, tra ve trang thai binh thuong
+  });
+  tr.addEventListener('dragend', () => {
+    tr.draggable = false;
+    tr.classList.remove('dragging-row');
+    dragRow = null;
+    document.querySelectorAll('.drag-over-line').forEach(el => el.classList.remove('drag-over-line'));
+  });
+  tr.addEventListener('dragstart', (e) => {
+    dragRow = tr;
+    tr.classList.add('dragging-row');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+}
+const lineBodyEl = document.getElementById('lineBody');
+lineBodyEl.addEventListener('dragover', (e) => {
+  if (!dragRow) return;
+  e.preventDefault();
+  const afterRow = getRowAfterDragY(lineBodyEl, e.clientY);
+  document.querySelectorAll('.drag-over-line').forEach(el => el.classList.remove('drag-over-line'));
+  if (afterRow == null) {
+    lineBodyEl.appendChild(dragRow);
+  } else if (afterRow !== dragRow) {
+    afterRow.classList.add('drag-over-line');
+    lineBodyEl.insertBefore(dragRow, afterRow);
+  }
+});
+function getRowAfterDragY(container, y) {
+  const rows = [...container.querySelectorAll('tr:not(.dragging-row)')];
+  return rows.reduce((closest, row) => {
+    const box = row.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset, element: row };
+    }
+    return closest;
+  }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+}
+function calc(el) {
+  calcAllRow(el.closest('tr'));
+}
+function calcAllRow(tr) {
+  const qty = parseFloat(tr.querySelector('.qty-input').value) || 0;
+  const price = parseFloat(rawMoneyDecimalValue(tr.querySelector('.price-input'))) || 0;
+  const amount = Math.round(qty * price);
+  tr.querySelector('.line-amount').textContent = amount.toLocaleString('vi-VN');
+  updateTotals();
+}
+function updateTotals() {
+  let subtotal = 0, vat = 0;
+  document.querySelectorAll('#lineBody tr').forEach(tr => {
+    const qty = parseFloat(tr.querySelector('.qty-input').value) || 0;
+    const price = parseFloat(rawMoneyDecimalValue(tr.querySelector('.price-input'))) || 0;
+    const tax = parseFloat(tr.querySelector('.tax-input').value) || 0;
+    const amount = qty * price;
+    subtotal += Math.round(amount); // lam tron "Thanh tien" tung dong, khop chuan hoa don thue
+    vat += Math.round(amount * tax / 100); // lam tron VAT tung dong, khop voi cach tinh phia server
+  });
+  document.getElementById('totalsBox').innerHTML =
+    `<div>Tạm tính (chưa VAT): <strong>${subtotal.toLocaleString('vi-VN')}</strong> đ</div>
+     <div>Tiền thuế VAT: <strong>${vat.toLocaleString('vi-VN')}</strong> đ</div>
+     <div class="fs-5">Tổng cộng: <strong>${(subtotal+vat).toLocaleString('vi-VN')}</strong> đ</div>`;
+}
+document.addEventListener('DOMContentLoaded', () => {
+  if (existingLines.length) {
+    existingLines.forEach(addLine);
+  } else {
+    addLine();
+  }
+});
+updateTotals();
+</script>
+
+<!-- Modal tinh nguoc don gia tu tong tien mong muon -->
+<div class="modal fade" id="reverseCalcModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tính đơn giá từ tổng tiền mong muốn</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small">Nhập tổng tiền dòng này bạn muốn có (đã gồm VAT), hệ thống sẽ tự tính ra đơn giá (chưa VAT) cần nhập để ra đúng số đó — không sửa cách tính, chỉ giúp tìm đúng đơn giá đầu vào.</p>
+        <div class="mb-2"><span class="text-muted">Số lượng:</span> <strong id="rc_qty_display"></strong> &nbsp; <span class="text-muted">Thuế suất:</span> <strong id="rc_tax_display"></strong>%</div>
+        <label class="form-label">Tổng tiền mong muốn (đã gồm VAT) *</label>
+        <input type="text" id="rc_target" class="form-control money-input" value="0" autofocus>
+        <div id="rc_result" class="alert alert-info py-2 mt-3 d-none"></div>
+        <div id="rc_error" class="alert alert-danger py-2 mt-3 d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-primary" onclick="applyReverseCalc()">Áp dụng vào dòng này</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let reverseCalcTargetRow = null;
+let reverseCalcModalInstance = null;
+document.addEventListener('DOMContentLoaded', () => {
+  reverseCalcModalInstance = new bootstrap.Modal(document.getElementById('reverseCalcModal'));
+  document.getElementById('rc_target').addEventListener('money-changed', computeReverseCalc);
+});
+
+function computeLineTotal(qty, price, taxRate) {
+  const amount = qty * price;
+  const subtotal = Math.round(amount);
+  const vat = Math.round(amount * taxRate / 100);
+  return subtotal + vat;
+}
+
+// Tim don gia (co the co le) sao cho qty*gia (lam tron) + VAT (lam tron) dung bang target
+function reverseCalcPrice(qty, taxRate, target) {
+  if (!qty || qty <= 0) return null;
+  let price = target / (qty * (1 + taxRate / 100));
+  if (computeLineTotal(qty, price, taxRate) === target) return price;
+  const step = 1 / qty / 1000000;
+  for (let i = 1; i <= 50; i++) {
+    if (computeLineTotal(qty, price + i * step, taxRate) === target) return price + i * step;
+    if (computeLineTotal(qty, price - i * step, taxRate) === target) return price - i * step;
+  }
+  return price; // gan dung nhat co the tim duoc
+}
+
+function openReverseCalc(btn) {
+  const tr = btn.closest('tr');
+  reverseCalcTargetRow = tr;
+  const qty = parseFloat(tr.querySelector('.qty-input').value) || 0;
+  const tax = parseFloat(tr.querySelector('.tax-input').value) || 0;
+  document.getElementById('rc_qty_display').textContent = qty;
+  document.getElementById('rc_tax_display').textContent = tax;
+  document.getElementById('rc_target').value = '0';
+  document.getElementById('rc_result').classList.add('d-none');
+  document.getElementById('rc_error').classList.add('d-none');
+  reverseCalcModalInstance.show();
+}
+
+function computeReverseCalc() {
+  if (!reverseCalcTargetRow) return;
+  const qty = parseFloat(reverseCalcTargetRow.querySelector('.qty-input').value) || 0;
+  const tax = parseFloat(reverseCalcTargetRow.querySelector('.tax-input').value) || 0;
+  const target = parseFloat(rawMoneyValue(document.getElementById('rc_target'))) || 0;
+  const resultBox = document.getElementById('rc_result');
+  const errorBox = document.getElementById('rc_error');
+  if (!qty || target <= 0) { resultBox.classList.add('d-none'); errorBox.classList.add('d-none'); return; }
+  const price = reverseCalcPrice(qty, tax, target);
+  const achieved = computeLineTotal(qty, price, tax);
+  if (achieved === target) {
+    resultBox.classList.remove('d-none');
+    errorBox.classList.add('d-none');
+    resultBox.innerHTML = `Đơn giá cần nhập: <strong>${price.toLocaleString('vi-VN', {maximumFractionDigits: 6})}</strong> đ<br>→ Ra đúng tổng: <strong>${achieved.toLocaleString('vi-VN')}</strong> đ`;
+  } else {
+    resultBox.classList.add('d-none');
+    errorBox.classList.remove('d-none');
+    errorBox.textContent = `Không tìm được đơn giá khớp tuyệt đối (gần nhất ra ${achieved.toLocaleString('vi-VN')} đ, lệch ${Math.abs(achieved-target)} đ). Trường hợp này rất hiếm gặp.`;
+  }
+}
+
+function applyReverseCalc() {
+  if (!reverseCalcTargetRow) return;
+  const qty = parseFloat(reverseCalcTargetRow.querySelector('.qty-input').value) || 0;
+  const tax = parseFloat(reverseCalcTargetRow.querySelector('.tax-input').value) || 0;
+  const target = parseFloat(rawMoneyValue(document.getElementById('rc_target'))) || 0;
+  if (!qty || target <= 0) return;
+  const price = reverseCalcPrice(qty, tax, target);
+  const priceInput = reverseCalcTargetRow.querySelector('.price-input');
+  priceInput.value = price.toLocaleString('vi-VN', { maximumFractionDigits: 6 }).replace(/\s/g, '');
+  calc(priceInput);
+  reverseCalcModalInstance.hide();
+}
+</script>
+
+<%- include('../partials/attr-quickadd-modal') %>
+<%- include('../partials/footer') %>

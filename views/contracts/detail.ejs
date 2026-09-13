@@ -1,0 +1,60 @@
+<%- include('../partials/header', {title: row.contract_no}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.contract_no %>
+    <% const st = {draft:['Nháp','secondary'],signed:['Đã ký','success'],cancelled:['Đã hủy','danger']}[row.status]; %>
+    <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+  </h4>
+  <div>
+    <a href="/contracts/<%= row.id %>/pdf" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf"></i> Xuất hợp đồng (PDF)</a>
+    <% if (row.status === 'draft') { %>
+      <a href="/contracts/<%= row.id %>/edit" class="btn btn-sm btn-outline-primary">Sửa</a>
+      <form class="d-inline" method="POST" action="/contracts/<%= row.id %>/sign"><button class="btn btn-sm btn-success">Đánh dấu đã ký</button></form>
+      <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">Hủy</button>
+    <% } %>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+  </div>
+</div>
+
+<div class="card p-3 mb-3">
+  <div><strong>Khách hàng:</strong> <a href="/customers/<%= customer.id %>"><%= customer.name %></a></div>
+  <div><strong>Đơn bán liên kết:</strong> <a href="/sales-orders/<%= row.so_id %>"><%= row.so_no %></a></div>
+  <div><strong>Giá trị:</strong> <%= formatMoney(row.so_total) %> đ</div>
+  <div><strong>Ngày ký:</strong> <%= formatDate(row.contract_date) %></div>
+  <div><strong>Thuế suất ghi trên HĐ:</strong> <%= row.tax_rate_label || '-' %></div>
+  <div><strong>Bảo hành:</strong> <%= row.warranty_months %> tháng</div>
+  <% if (row.price_valid_until) { %><div><strong>Giá có hiệu lực đến:</strong> <%= formatDate(row.price_valid_until) %></div><% } %>
+  <div><strong>Tiến độ thanh toán:</strong> <%= row.payment_terms_text %></div>
+</div>
+
+<div class="card p-3 mb-3">
+  <h6>Tài liệu đính kèm (hợp đồng đã ký, bản scan...)</h6>
+  <%- include('../partials/attachment-list', { attachments, folder: 'contracts', backUrl: '/contracts/' + row.id }) %>
+  <form method="POST" action="/documents/contract/<%= row.id %>/upload" enctype="multipart/form-data" class="row g-2">
+    <input type="hidden" name="back_url" value="/contracts/<%= row.id %>">
+    <div class="col-md-5">
+      <input type="text" name="label" class="form-control form-control-sm" placeholder="Nhãn (VD: Hợp đồng đã ký scan)" value="Hợp đồng đã ký (scan)">
+    </div>
+    <div class="col-md-5">
+      <input type="file" name="file" class="form-control form-control-sm" required>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-primary w-100">Tải lên</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="cancelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" method="POST" action="/contracts/<%= row.id %>/cancel">
+      <div class="modal-header"><h5 class="modal-title">Hủy hợp đồng <%= row.contract_no %></h5></div>
+      <div class="modal-body">Xác nhận hủy hợp đồng này?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="submit" class="btn btn-danger">Xác nhận hủy</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/delete-modal', { deleteUrl: '/contracts/' + row.id + '/delete', itemLabel: 'hợp đồng "' + row.contract_no + '"', modalId: 'delModal', backUrl: '/contracts' }) %>
+<%- include('../partials/footer') %>

@@ -1,0 +1,239 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<form method="POST" action="<%= renewFromId ? '/licenses/' + renewFromId + '/renew' : (row.id ? '/licenses/' + row.id : '/licenses') %>">
+  <div class="card p-3 mb-3">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Khách hàng *</label>
+        <select name="customer_id" class="form-select searchable-select" data-placeholder="Gõ tên khách hàng để tìm..." required <%= row.id ? 'disabled' : '' %>>
+          <option value="">-- Chọn khách hàng --</option>
+          <% customers.forEach(c => { %>
+            <option value="<%= c.id %>" <%= row.customer_id === c.id ? 'selected' : '' %>><%= c.name %></option>
+          <% }) %>
+        </select>
+        <% if (row.id) { %><input type="hidden" name="customer_id" value="<%= row.customer_id %>"><% } %>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Tên license *</label>
+        <input type="text" name="license_name" class="form-control" required value="<%= row.license_name || '' %>" placeholder="VD: Microsoft 365 Business Standard">
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h6>Chi tiết giá</h6>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Số lượng *</label>
+        <input type="number" id="qty" name="quantity" class="form-control" required min="0" step="any" value="<%= row.quantity || 1 %>" onchange="calc()">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Đơn giá (chưa VAT) *</label>
+        <div class="input-group">
+          <input type="text" id="price" name="unit_price" class="form-control money-input-decimal" required value="<%= String(row.unit_price || 0).replace('.', ',') %>" onchange="calc()">
+          <button type="button" class="btn btn-outline-secondary" title="Tính đơn giá từ tổng tiền mong muốn" onclick="openReverseCalc()"><i class="bi bi-calculator"></i></button>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Thuế suất (%)</label>
+        <input type="number" id="tax" name="tax_rate_percent" class="form-control" value="<%= row.tax_rate_percent != null ? row.tax_rate_percent : (settings.default_tax_rate_percent || 8) %>" onchange="calc()">
+      </div>
+    </div>
+    <div class="text-end mt-3" id="totalsBox"></div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h6>Thời hạn</h6>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Ngày bắt đầu</label>
+        <input type="date" name="start_date" class="form-control" value="<%= row.start_date || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Ngày hết hạn (để trống nếu license vĩnh viễn)</label>
+        <input type="date" name="expiry_date" class="form-control" value="<%= row.expiry_date || '' %>">
+      </div>
+      <div class="col-md-4">
+        <div class="form-check form-switch mt-4">
+          <input class="form-check-input" type="checkbox" name="requires_renewal" id="requires_renewal" <%= (row.requires_renewal === undefined || row.requires_renewal) ? 'checked' : '' %>>
+          <label class="form-check-label" for="requires_renewal">Cần nhắc gia hạn (báo trước 14 ngày)</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <label class="form-label"><strong>Nhà cung cấp license</strong> (chọn để hiện đúng thông tin cần khai báo)</label>
+    <select name="vendor_type" id="vendor_type" class="form-select mb-3" onchange="toggleVendorSection()" style="max-width:350px;">
+      <option value="other" <%= (!row.vendor_type || row.vendor_type === 'other') ? 'selected' : '' %>>-- Không cần thông tin đặc biệt --</option>
+      <option value="microsoft" <%= row.vendor_type === 'microsoft' ? 'selected' : '' %>>Microsoft</option>
+      <option value="autodesk" <%= row.vendor_type === 'autodesk' ? 'selected' : '' %>>Autodesk</option>
+    </select>
+
+    <div id="tenantSection" class="<%= row.vendor_type === 'microsoft' ? '' : 'd-none' %>">
+      <div class="form-text mb-2">Thông tin end-user riêng cho license này — có thể khác nhau giữa các license, kể cả cùng 1 khách hàng.</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Tên công ty (người dùng cuối)</label>
+          <input type="text" name="tenant_company_name" class="form-control" value="<%= row.ms_end_user_company_name || '' %>">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Địa chỉ</label>
+          <input type="text" name="tenant_address" class="form-control" value="<%= row.ms_end_user_address || '' %>">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Điện thoại</label>
+          <input type="text" name="tenant_phone" class="form-control" value="<%= row.ms_end_user_phone || '' %>">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Người quản lý License</label>
+          <input type="text" name="tenant_manager" class="form-control" value="<%= row.ms_license_manager_name || '' %>">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Email quản trị/nhận License</label>
+          <input type="email" name="tenant_admin_email" class="form-control" value="<%= row.ms_admin_email || '' %>">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Tenant / domain .onmicrosoft.com</label>
+          <input type="text" name="tenant_domain" class="form-control" value="<%= row.ms_tenant_domain || '' %>" placeholder="VD: abc.onmicrosoft.com">
+        </div>
+      </div>
+    </div>
+
+    <div id="autodeskSection" class="<%= row.vendor_type === 'autodesk' ? '' : 'd-none' %>">
+      <div class="form-text mb-2">Thông tin end-user riêng cho license này — có thể khác nhau giữa các license, kể cả cùng 1 khách hàng.</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Tên người dùng cuối</label>
+          <input type="text" name="autodesk_end_user_name" class="form-control" value="<%= row.adsk_end_user_name || '' %>">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Email nhận license</label>
+          <input type="email" name="autodesk_license_email" class="form-control" value="<%= row.adsk_license_email || '' %>">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Người quản lý license (email)</label>
+          <input type="email" name="autodesk_manager_email" class="form-control" value="<%= row.adsk_manager_email || '' %>">
+        </div>
+        <div class="col-md-6"></div>
+        <div class="col-md-6">
+          <label class="form-label">Contract ID</label>
+          <input type="text" name="autodesk_contract_id" class="form-control" value="<%= row.adsk_contract_id || '' %>">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Subscription ID</label>
+          <input type="text" name="autodesk_subscription_id" class="form-control" value="<%= row.adsk_subscription_id || '' %>">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <label class="form-label">Ghi chú</label>
+    <textarea name="note" class="form-control"><%= row.note || '' %></textarea>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Lưu License</button>
+  <a href="/licenses" class="btn btn-outline-secondary">Hủy</a>
+</form>
+
+<!-- Modal tinh nguoc don gia -->
+<div class="modal fade" id="reverseCalcModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tính đơn giá từ tổng tiền mong muốn</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small">Nhập tổng tiền bạn muốn (đã gồm VAT), hệ thống tự tính ra đơn giá chưa VAT cần nhập.</p>
+        <label class="form-label">Tổng tiền mong muốn (đã gồm VAT) *</label>
+        <input type="text" id="rc_target" class="form-control money-input" value="0" autofocus>
+        <div id="rc_result" class="alert alert-info py-2 mt-3 d-none"></div>
+        <div id="rc_error" class="alert alert-danger py-2 mt-3 d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-primary" onclick="applyReverseCalc()">Áp dụng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleVendorSection() {
+  const val = document.getElementById('vendor_type').value;
+  document.getElementById('tenantSection').classList.toggle('d-none', val !== 'microsoft');
+  document.getElementById('autodeskSection').classList.toggle('d-none', val !== 'autodesk');
+}
+function calc() {
+  const qty = parseFloat(document.getElementById('qty').value) || 0;
+  const price = parseFloat(rawMoneyDecimalValue(document.getElementById('price'))) || 0;
+  const tax = parseFloat(document.getElementById('tax').value) || 0;
+  const amount = qty * price;
+  const subtotal = Math.round(amount);
+  const vat = Math.round(amount * tax / 100);
+  document.getElementById('totalsBox').innerHTML =
+    `<div>Tạm tính (chưa VAT): <strong>${subtotal.toLocaleString('vi-VN')}</strong> đ</div>
+     <div>Tiền thuế VAT: <strong>${vat.toLocaleString('vi-VN')}</strong> đ</div>
+     <div class="fs-5">Tổng cộng: <strong>${(subtotal+vat).toLocaleString('vi-VN')}</strong> đ</div>`;
+}
+document.getElementById('price').addEventListener('money-changed', calc);
+document.addEventListener('DOMContentLoaded', calc);
+
+let reverseCalcModalInstance;
+document.addEventListener('DOMContentLoaded', () => {
+  reverseCalcModalInstance = new bootstrap.Modal(document.getElementById('reverseCalcModal'));
+  document.getElementById('rc_target').addEventListener('money-changed', computeReverseCalc);
+});
+function computeLineTotal(qty, price, taxRate) {
+  const amount = qty * price;
+  return Math.round(amount) + Math.round(amount * taxRate / 100);
+}
+function reverseCalcPrice(qty, taxRate, target) {
+  if (!qty || qty <= 0) return null;
+  let price = target / (qty * (1 + taxRate / 100));
+  if (computeLineTotal(qty, price, taxRate) === target) return price;
+  const step = 1 / qty / 1000000;
+  for (let i = 1; i <= 50; i++) {
+    if (computeLineTotal(qty, price + i * step, taxRate) === target) return price + i * step;
+    if (computeLineTotal(qty, price - i * step, taxRate) === target) return price - i * step;
+  }
+  return price;
+}
+function openReverseCalc() {
+  document.getElementById('rc_target').value = '0';
+  document.getElementById('rc_result').classList.add('d-none');
+  document.getElementById('rc_error').classList.add('d-none');
+  reverseCalcModalInstance.show();
+}
+function computeReverseCalc() {
+  const qty = parseFloat(document.getElementById('qty').value) || 0;
+  const tax = parseFloat(document.getElementById('tax').value) || 0;
+  const target = parseFloat(rawMoneyValue(document.getElementById('rc_target'))) || 0;
+  const resultBox = document.getElementById('rc_result');
+  const errorBox = document.getElementById('rc_error');
+  if (!qty || target <= 0) { resultBox.classList.add('d-none'); errorBox.classList.add('d-none'); return; }
+  const price = reverseCalcPrice(qty, tax, target);
+  const achieved = computeLineTotal(qty, price, tax);
+  if (achieved === target) {
+    resultBox.classList.remove('d-none'); errorBox.classList.add('d-none');
+    resultBox.innerHTML = `Đơn giá cần nhập: <strong>${price.toLocaleString('vi-VN', {maximumFractionDigits: 6})}</strong> đ`;
+  } else {
+    resultBox.classList.add('d-none'); errorBox.classList.remove('d-none');
+    errorBox.textContent = `Không tìm được khớp tuyệt đối (gần nhất ${achieved.toLocaleString('vi-VN')} đ).`;
+  }
+}
+function applyReverseCalc() {
+  const qty = parseFloat(document.getElementById('qty').value) || 0;
+  const tax = parseFloat(document.getElementById('tax').value) || 0;
+  const target = parseFloat(rawMoneyValue(document.getElementById('rc_target'))) || 0;
+  if (!qty || target <= 0) return;
+  const price = reverseCalcPrice(qty, tax, target);
+  const priceInput = document.getElementById('price');
+  priceInput.value = price.toLocaleString('vi-VN', { maximumFractionDigits: 6 }).replace(/\s/g, '');
+  calc();
+  reverseCalcModalInstance.hide();
+}
+</script>
+<%- include('../partials/footer') %>

@@ -1,0 +1,29 @@
+<%- include('../../partials/header', {title: 'Danh sách tài sản'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Danh sách tài sản</h4>
+  <a href="/tongvu/assets/new" class="btn btn-primary btn-sm">+ Thêm tài sản</a>
+</div>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Mã TS</th><th>Tên tài sản</th><th>SL</th><th>Người dùng</th><th>Chi nhánh</th><th>Nguyên giá</th><th>Giá trị còn lại</th><th>Trạng thái</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><a href="/tongvu/assets/<%= r.id %>"><%= r.asset_code %></a></td>
+      <td><%= r.asset_name %></td>
+      <td><%= r.quantity %></td>
+      <td><%= r.user_name || '-' %></td>
+      <td><%= r.location || '-' %></td>
+      <td><%= formatMoney(r.purchase_cost) %></td>
+      <td><%= formatMoney(r.dep.bookValue) %><% if (r.dep.isFullyDepreciated) { %> <span class="badge bg-secondary">Hết KH</span><% } %></td>
+      <td>
+        <% const st = {in_use:['Đang dùng','success'],broken:['Hỏng - chờ sửa','warning'],disposed:['Đã thanh lý','dark'],in_stock:['Trong kho','info'],lost:['Thất lạc','danger']}[r.status]; %>
+        <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+      </td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="8" class="text-muted text-center py-3">Chưa có tài sản nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../../partials/footer') %>

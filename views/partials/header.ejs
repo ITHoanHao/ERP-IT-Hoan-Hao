@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + ' - ' : '' %>ERP Lite - IT Hoàn Hảo</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.3.1/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+  <link href="/public/css/style.css" rel="stylesheet">
+</head>
+<body>
+<% if (session && session.userId) { %>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">IT Hoàn Hảo - ERP Lite</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav1">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav1">
+      <ul class="navbar-nav me-auto flex-wrap">
+        <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link fw-bold" href="/wizard"><i class="bi bi-magic"></i> Tạo đơn hàng</a></li>
+        <li class="nav-item"><a class="nav-link" href="/tracking">Theo dõi đơn hàng</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Quy trình bán hàng</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/quotations">1. Báo giá</a></li>
+            <li><a class="dropdown-item" href="/sales-orders">2. Đơn bán (khách chốt)</a></li>
+            <li><a class="dropdown-item" href="/purchase-orders">3. Đơn mua hàng (nhập từ NCC)</a></li>
+            <li><a class="dropdown-item" href="/deliveries">4. Giao hàng</a></li>
+            <li><a class="dropdown-item" href="/invoices">5. Hóa đơn</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="/licenses">License</a></li>
+            <li><a class="dropdown-item" href="/contracts">Hợp đồng</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="/payments">Thu/Chi</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Danh mục</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/customers">Khách hàng</a></li>
+            <li><a class="dropdown-item" href="/suppliers">Nhà cung cấp</a></li>
+            <li><a class="dropdown-item" href="/products">Sản phẩm</a></li>
+            <li><a class="dropdown-item" href="/inventory">Kho</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="/reports">Báo cáo</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Tổng vụ</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/tongvu">Tổng quan</a></li>
+            <li><a class="dropdown-item" href="/tongvu/employees">Nhân viên</a></li>
+            <li><a class="dropdown-item" href="/tongvu/assets">Tài sản</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Nhà trọ</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/nhatro">Tổng quan tháng</a></li>
+            <li><a class="dropdown-item" href="/nhatro/tenants">Người thuê trọ</a></li>
+            <li><a class="dropdown-item" href="/nhatro/occupancy">Gán/chuyển phòng</a></li>
+            <li><a class="dropdown-item" href="/nhatro/rooms">Danh sách phòng</a></li>
+            <li><a class="dropdown-item" href="/nhatro/contracts">Hợp đồng thuê trọ</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="/nhatro/reports">Báo cáo lợi nhuận</a></li>
+          </ul>
+        </li>
+      </ul>
+      <form class="d-flex me-2" action="/search" method="get">
+        <input class="form-control form-control-sm" type="search" name="q" placeholder="Tra cứu KH/SP...">
+      </form>
+      <div class="dropdown me-2">
+        <button class="btn btn-outline-light btn-sm position-relative" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+          <i class="bi bi-bell"></i>
+          <% if (typeof notifications !== 'undefined' && notifications.length) { %>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"><%= notifications.length %></span>
+          <% } %>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" style="min-width:380px; max-height:400px; overflow-y:auto;">
+          <li><h6 class="dropdown-header">Thông báo cần xử lý</h6></li>
+          <% if (typeof notifications === 'undefined' || notifications.length === 0) { %>
+            <li><span class="dropdown-item-text text-muted">Không có thông báo nào.</span></li>
+          <% } else { %>
+            <% notifications.forEach(n => { %>
+              <li><a class="dropdown-item d-flex align-items-start gap-2" href="<%= n.link %>">
+                <i class="bi <%= n.icon %> text-<%= n.severity %> mt-1"></i>
+                <span class="small"><%= n.message %></span>
+              </a></li>
+            <% }) %>
+          <% } %>
+        </ul>
+      </div>
+      <a href="/help" class="btn btn-outline-light btn-sm me-2" title="Hướng dẫn sử dụng"><i class="bi bi-question-circle"></i></a>
+      <a href="/settings" class="btn btn-outline-light btn-sm me-2"><i class="bi bi-gear"></i></a>
+      <a href="/logout" class="btn btn-outline-light btn-sm">Đăng xuất</a>
+    </div>
+  </div>
+</nav>
+<% } %>
+<div class="container-fluid py-3">
+  <% if (typeof flash !== 'undefined' && flash) { %>
+    <div class="alert alert-<%= flash.type || 'info' %> alert-dismissible fade show" role="alert">
+      <%= flash.message %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+</div>

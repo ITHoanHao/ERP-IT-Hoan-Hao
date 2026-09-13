@@ -1,0 +1,102 @@
+<%- include('../partials/header', {title: title}) %>
+<style>
+  .flow-wrap { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; }
+  .flow-step { background: #fff; border: 2px solid #0d6efd; border-radius: 10px; padding: 12px 14px; min-width: 150px; flex: 1 1 150px; text-align: center; position: relative; }
+  .flow-step .num { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#0d6efd; color:#fff; font-weight:bold; margin-bottom:6px; }
+  .flow-step.optional { border-style: dashed; border-color: #adb5bd; }
+  .flow-step.optional .num { background:#adb5bd; }
+  .flow-arrow { display:flex; align-items:center; justify-content:center; padding: 0 4px; color:#adb5bd; font-size: 1.3rem; }
+  .help-section h5 { margin-top: 2rem; }
+  .help-section h5 .bi { color:#0d6efd; }
+</style>
+
+<h4 class="mb-1">Trợ giúp &amp; Hướng dẫn sử dụng</h4>
+<p class="text-muted">ERP Lite — IT Hoàn Hảo</p>
+
+<div class="card p-3 mb-4 bg-light border-0">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <span class="badge bg-primary fs-6">Phiên bản v<%= versionInfo.version %></span>
+      <span class="text-muted small ms-2">Cập nhật: <%= formatDate(versionInfo.releaseDate) %></span>
+    </div>
+  </div>
+  <ul class="mb-0 mt-2 small">
+    <% versionInfo.highlights.forEach(h => { %><li><%= h %></li><% }) %>
+  </ul>
+</div>
+
+<div class="help-section">
+
+<h5><i class="bi bi-magic"></i> Cách tạo 1 đơn hàng (dùng "Tạo đơn hàng")</h5>
+<p>Đây là cách làm được khuyến nghị cho <strong>mọi nhân viên</strong> — hệ thống dẫn dắt từng bước, không thể bỏ sót:</p>
+
+<div class="flow-wrap mb-3">
+  <div class="flow-step"><div class="num">1</div>Tạo báo giá</div>
+  <div class="flow-arrow"><i class="bi bi-arrow-right"></i></div>
+  <div class="flow-step"><div class="num">2</div>Gửi khách</div>
+  <div class="flow-arrow"><i class="bi bi-arrow-right"></i></div>
+  <div class="flow-step"><div class="num">3</div>Khách chốt</div>
+  <div class="flow-arrow"><i class="bi bi-arrow-right"></i></div>
+  <div class="flow-step optional"><div class="num">4</div>Đơn mua hàng<br><span class="badge bg-secondary">Bỏ qua nếu đủ tồn kho</span></div>
+  <div class="flow-arrow"><i class="bi bi-arrow-right"></i></div>
+  <div class="flow-step optional"><div class="num">5</div>Nhận hàng về</div>
+</div>
+<div class="flow-wrap mb-3">
+  <div class="flow-step"><div class="num">6</div>Giao cho khách</div>
+  <div class="flow-arrow"><i class="bi bi-arrow-right"></i></div>
+  <div class="flow-step"><div class="num">7</div>Hóa đơn &amp; chứng từ</div>
+  <div class="flow-arrow"><i class="bi bi-arrow-right"></i></div>
+  <div class="flow-step"><div class="num">8</div>Ghi nhận thanh toán</div>
+  <div class="flow-arrow"><i class="bi bi-check-circle-fill text-success"></i></div>
+  <div class="flow-step" style="border-color:#198754; flex:0 0 auto;"><i class="bi bi-flag-fill text-success fs-4"></i><br>Hoàn tất</div>
+</div>
+
+<ol>
+  <li>Bấm nút <strong>"Tạo đơn hàng"</strong> to màu xanh trên Dashboard (hoặc mục "Tạo đơn hàng" trên thanh menu).</li>
+  <li>Chọn <strong>khách hàng</strong> → hệ thống tạo báo giá nháp và đưa bạn vào màn hình các bước.</li>
+  <li>Điền sản phẩm/dịch vụ vào báo giá, lưu lại, rồi bấm <strong>"Gửi khách hàng"</strong>.</li>
+  <li>Khi khách đồng ý mua, quay lại đơn này, bấm <strong>"✓ Khách đã chốt"</strong> — hệ thống tự tạo Đơn bán.</li>
+  <li>Màn hình sẽ tự hiện đúng nút cần bấm cho bước tiếp theo (Đặt hàng NCC nếu thiếu hàng, Nhận hàng, Giao hàng, đính kèm Hóa đơn điện tử, rồi Ghi nhận thanh toán).</li>
+  <li>Mỗi lúc chỉ có <strong>1 nút màu xanh</strong> để bấm — cứ theo đó làm lần lượt là xong, không cần nhớ quy trình.</li>
+</ol>
+
+<div class="alert alert-info">
+  <i class="bi bi-lightbulb"></i> Nếu đã đủ hàng trong kho, hệ thống <strong>tự động bỏ qua</strong> bước "Đơn mua hàng" và "Nhận hàng" — không cần làm 2 bước đó.
+</div>
+
+<div class="alert alert-warning">
+  <i class="bi bi-shield-lock"></i> Hệ thống <strong>không cho phép nhảy cóc</strong> bước — ví dụ chưa giao hàng thì chưa thể đính kèm hóa đơn, chưa có hóa đơn thì chưa thể ghi nhận thanh toán. Nếu bạn cố tình vào thẳng đường link cũ khi thiếu dữ liệu bước trước, hệ thống sẽ báo lỗi hoặc đưa bạn quay lại.
+</div>
+
+<h5><i class="bi bi-list-ul"></i> Xem lại các đơn đang xử lý dở</h5>
+<p>Vào menu <strong>"Tạo đơn hàng"</strong> (không bấm nút bắt đầu mới) để xem danh sách toàn bộ đơn đang ở giữa chừng — bấm "Tiếp tục →" để quay lại đúng bước đang dừng.</p>
+
+<h5><i class="bi bi-diagram-3"></i> Các menu khác dùng khi nào?</h5>
+<table class="table table-sm">
+  <tbody>
+    <tr><td style="width:220px"><strong>Theo dõi đơn hàng</strong></td><td>Xem tất cả đơn đang trễ hẹn (báo giá gửi lâu chưa chốt, giao hàng trễ, chưa thanh toán...) — dùng để đôn đốc.</td></tr>
+    <tr><td><strong>Quy trình bán hàng</strong> (menu đầy đủ)</td><td>Vào từng trang riêng (Báo giá/Đơn bán/Đơn mua...) khi cần <em>tra cứu lại</em> đơn cũ, hoặc xử lý trường hợp đặc biệt (VD mua văn phòng phẩm không liên quan đơn bán nào).</td></tr>
+    <tr><td><strong>Danh mục</strong></td><td>Quản lý Khách hàng, Nhà cung cấp, Sản phẩm, Kho.</td></tr>
+    <tr><td><strong>Báo cáo</strong></td><td>Doanh thu, lợi nhuận, công nợ theo tháng.</td></tr>
+    <tr><td><strong>Tổng vụ / Nhà trọ</strong></td><td>Quản lý nhân sự, tài sản nội bộ / quản lý phòng trọ cho thuê — độc lập với quy trình bán hàng.</td></tr>
+  </tbody>
+</table>
+
+<h5><i class="bi bi-question-diamond"></i> Câu hỏi thường gặp</h5>
+<div class="accordion" id="faqAccordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">Tôi bấm nút nhưng không thấy chuyển bước, phải làm sao?</button></h2>
+    <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">Kiểm tra xem đã điền đủ thông tin bắt buộc (dấu *) chưa. Nếu vẫn không được, chụp màn hình gửi cho quản trị viên (Chau) để kiểm tra.</div></div>
+  </div>
+  <div class="accordion-item">
+    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">Tạo nhầm đơn hàng thì xóa ở đâu?</button></h2>
+    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">Vào menu "Quy trình bán hàng" → "Báo giá", mở đúng báo giá đó, bấm nút Xóa (cần mật khẩu quản trị viên nếu đã phát sinh Đơn bán trở đi).</div></div>
+  </div>
+  <div class="accordion-item">
+    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">Khách hàng chưa có trong hệ thống thì sao?</button></h2>
+    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">Vào "Danh mục" → "Khách hàng" → "Thêm mới" trước, sau đó quay lại "Tạo đơn hàng" để chọn được khách hàng vừa thêm.</div></div>
+  </div>
+</div>
+
+</div>
+<%- include('../partials/footer') %>

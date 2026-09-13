@@ -1,0 +1,28 @@
+<%- include('../../partials/header', {title: 'Danh sách người thuê trọ'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Danh sách người thuê trọ</h4>
+  <div>
+    <a href="/nhatro/occupancy" class="btn btn-outline-secondary btn-sm">Gán/chuyển phòng</a>
+    <a href="/nhatro/tenants/new" class="btn btn-primary btn-sm">+ Thêm người thuê</a>
+  </div>
+</div>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Họ tên</th><th>Phòng hiện tại</th><th>Ngày sinh</th><th>Giới tính</th><th>CMND/CCCD</th><th>SĐT</th><th></th></tr></thead>
+  <tbody>
+  <% tenants.forEach(t => { %>
+    <tr>
+      <td><%= t.full_name %></td>
+      <td><% if (t.currentRoom) { %>Phòng <%= t.currentRoom %><% } else { %><span class="text-muted">Chưa ở phòng nào</span><% } %></td>
+      <td><%= t.dob || '-' %></td>
+      <td><%= t.gender || '-' %></td>
+      <td><%= t.id_number || '-' %></td>
+      <td><%= t.phone || '-' %></td>
+      <td><a href="/nhatro/tenants/<%= t.id %>/edit" class="btn btn-sm btn-outline-primary">Sửa</a></td>
+    </tr>
+  <% }) %>
+  <% if (tenants.length === 0) { %><tr><td colspan="7" class="text-muted text-center py-3">Chưa có người thuê nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../../partials/footer') %>

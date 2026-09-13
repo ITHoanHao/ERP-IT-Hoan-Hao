@@ -1,0 +1,20 @@
+<%- include('../partials/header', {title: 'Báo cáo lợi nhuận nhà trọ'}) %>
+<h4 class="mb-3">Báo cáo lợi nhuận nhà trọ (12 tháng gần nhất)</h4>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Tháng</th><th>Doanh thu (thu từ khách)</th><th>Chi phí vận hành</th><th>Lợi nhuận</th><th></th></tr></thead>
+  <tbody>
+  <% data.forEach(d => { %>
+    <tr>
+      <td><%= d.month.split('-')[1] %>/<%= d.month.split('-')[0] %></td>
+      <td><%= formatMoney(d.revenue) %> đ</td>
+      <td><%= formatMoney(d.costs) %> đ</td>
+      <td class="fw-bold <%= d.profit >= 0 ? 'text-success' : 'text-danger' %>"><%= formatMoney(d.profit) %> đ</td>
+      <td><a href="/nhatro?month=<%= d.month %>" class="btn btn-sm btn-outline-primary">Xem chi tiết</a></td>
+    </tr>
+  <% }) %>
+  <% if (data.length === 0) { %><tr><td colspan="5" class="text-muted text-center py-3">Chưa có dữ liệu tháng nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

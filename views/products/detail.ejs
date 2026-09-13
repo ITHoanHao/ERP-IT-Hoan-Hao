@@ -1,0 +1,58 @@
+<%- include('../partials/header', {title: row.name}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.name %> <small class="text-muted"><%= row.sku %></small></h4>
+  <div>
+    <a href="/products/<%= row.id %>/edit" class="btn btn-sm btn-outline-primary">Sửa</a>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+  </div>
+</div>
+<div class="card p-3 mb-3">
+  <div><strong>Nhóm:</strong> <%= row.category || '-' %> &nbsp; <strong>Thương hiệu:</strong> <%= row.brand || '-' %></div>
+  <div><strong>Đơn vị:</strong> <%= row.unit %> &nbsp; <strong>Bảo hành mặc định:</strong> <%= row.warranty_months_default %> tháng</div>
+  <div class="mt-2"><strong>Nhập từ nhà cung cấp:</strong>
+    <% if (row.supplier_name) { %>
+      <a href="/suppliers/<%= row.supplier_id %>"><%= row.supplier_name %></a>
+    <% } else { %>
+      <span class="text-muted">Chưa gán nhà cung cấp — <a href="/products/<%= row.id %>/edit">sửa để thêm</a>.</span>
+    <% } %>
+  </div>
+</div>
+
+<% if (row.tracking_type === 'serial') { %>
+<div class="card p-3">
+  <h6>Danh sách Serial (<%= serials.length %>)</h6>
+  <table class="table table-sm">
+    <thead><tr><th>Serial</th><th>Trạng thái</th><th>Giá nhập</th><th>Khách hàng</th><th>HH bảo hành</th></tr></thead>
+    <tbody>
+    <% serials.forEach(s => { %>
+      <tr>
+        <td><%= s.serial_no %></td>
+        <td>
+          <% const st = {in_stock:['Trong kho','secondary'],sold:['Đã bán','success'],warranty:['Đang bảo hành','warning'],returned_supplier:['Đã trả NCC','dark']}[s.status] || [s.status,'secondary']; %>
+          <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+        </td>
+        <td><%= formatMoney(s.purchase_cost) %></td>
+        <td><%= s.customer_id ? ('KH #' + s.customer_id) : '-' %></td>
+        <td><%= s.warranty_expiry_date ? formatDate(s.warranty_expiry_date) : '-' %></td>
+      </tr>
+    <% }) %>
+    <% if (!serials.length) { %><tr><td colspan="5" class="text-muted">Chưa có serial nào trong kho.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+<% } else { %>
+<div class="card p-3">
+  <h6>Danh sách lô hàng (<%= batches.length %>)</h6>
+  <table class="table table-sm">
+    <thead><tr><th>Mã lô</th><th>Còn lại</th><th>Giá nhập</th><th>Ngày nhập</th></tr></thead>
+    <tbody>
+    <% batches.forEach(b => { %>
+      <tr><td><%= b.batch_no %></td><td><%= b.quantity_remaining %></td><td><%= formatMoney(b.unit_cost) %></td><td><%= formatDate(b.received_date) %></td></tr>
+    <% }) %>
+    <% if (!batches.length) { %><tr><td colspan="4" class="text-muted">Chưa có lô hàng nào trong kho.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+<%- include('../partials/delete-modal', { deleteUrl: '/products/' + row.id + '/delete', itemLabel: 'sản phẩm "' + row.name + '"', modalId: 'delModal', backUrl: '/products' }) %>
+<%- include('../partials/footer') %>

@@ -1,0 +1,99 @@
+<%- include('../partials/header', {title: row.so_no}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.so_no %>
+    <% const st = {created:['Đã tạo','info'],delivered:['Đã hoàn tất','success'],cancelled:['Đã hủy','danger']}[row.status]; %>
+    <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+  </h4>
+  <div>
+    <% if (row.status === 'created') { %>
+      <% if (!delivery) { %>
+      <a href="/purchase-orders/new?so_id=<%= row.id %>" class="btn btn-sm btn-outline-secondary">Tạo đơn mua hàng</a>
+      <a href="/deliveries/new?so_id=<%= row.id %>" class="btn btn-sm btn-success">Giao hàng</a>
+      <% } %>
+      <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">Hủy đơn</button>
+    <% } %>
+    <% if (row.total_amount > CONTRACT_THRESHOLD) { %>
+      <% if (contract) { %>
+        <a href="/contracts/<%= contract.id %>" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-text"></i> Xem hợp đồng <%= contract.contract_no %></a>
+      <% } else { %>
+        <a href="/contracts/new?so_id=<%= row.id %>" class="btn btn-sm btn-warning"><i class="bi bi-file-earmark-plus"></i> Tạo hợp đồng (đơn &gt; 20 triệu)</a>
+      <% } %>
+    <% } %>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+  </div>
+</div>
+<div class="card p-3 mb-3">
+  <div><strong>Khách hàng:</strong> <a href="/customers/<%= row.customer_id %>"><%= row.customer_name %></a></div>
+  <div><strong>Ngày tạo:</strong> <%= formatDate(row.order_date) %></div>
+  <% if (row.status === 'cancelled') { %><div class="text-danger"><strong>Lý do hủy:</strong> <%= row.cancel_reason %></div><% } %>
+</div>
+<div class="card p-3 mb-3">
+  <h6>Chi tiết đơn hàng (chốt cứng, không sửa)</h6>
+  <table class="table table-sm">
+    <thead><tr><th>Sản phẩm/Dịch vụ</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th><th>Đã giao</th></tr></thead>
+    <tbody>
+    <% lines.forEach(l => { %>
+      <tr><td><%= l.product_name || l.description %></td><td><%= l.quantity %></td><td><%= formatMoney(l.unit_price) %></td><td><%= formatMoney(l.line_amount) %></td><td><%= l.quantity_delivered %>/<%= l.quantity %></td></tr>
+    <% }) %>
+    </tbody>
+    <tfoot>
+      <tr><td colspan="3" class="text-end">Tạm tính (chưa VAT)</td><td><%= formatMoney(row.subtotal_amount) %></td><td></td></tr>
+      <tr><td colspan="3" class="text-end">Thuế VAT</td><td><%= formatMoney(row.vat_amount) %></td><td></td></tr>
+      <tr class="fw-bold"><td colspan="3" class="text-end">Tổng cộng</td><td><%= formatMoney(row.total_amount) %></td><td></td></tr>
+    </tfoot>
+  </table>
+</div>
+<% if (relatedPOs.length) { %>
+<div class="card p-3 mb-3">
+  <h6>Đơn mua hàng liên quan</h6>
+  <ul class="mb-0"><% relatedPOs.forEach(po => { %><li><a href="/purchase-orders/<%= po.id %>"><%= po.po_no %></a> - <%= po.status %></li><% }) %></ul>
+</div>
+<% } %>
+<% if (delivery) { %>
+<div class="card p-3 mb-3">
+  <h6>Đã giao hàng</h6>
+  <div>Ngày giao: <%= formatDate(delivery.delivery_date) %> - Người nhận: <%= delivery.received_by %></div>
+</div>
+<% } %>
+<% if (invoice) { %>
+<div class="card p-3 mb-3">
+  <h6>Hóa đơn</h6>
+  <a href="/invoices/<%= invoice.id %>"><%= invoice.invoice_no %></a> -
+  <% if (invoice.payment_status === 'paid') { %><span class="badge bg-success">Đã thu</span><% } else { %><span class="badge bg-danger">Chưa thu</span><% } %>
+</div>
+<% } %>
+<div class="card p-3">
+  <h6>Hoa hồng Sales đối tác</h6>
+  <form method="POST" action="/sales-orders/<%= row.id %>/commission" class="d-flex align-items-center gap-2 mb-0">
+    <div class="form-check">
+      <input type="checkbox" class="form-check-input" id="hasCommission" name="has_partner_commission" value="1"
+        <%= row.has_partner_commission ? 'checked' : '' %> onchange="this.form.submit()">
+      <label class="form-check-label" for="hasCommission">Có hoa hồng cho Sales đối tác (25% lợi nhuận đơn hàng)</label>
+    </div>
+  </form>
+  <% if (row.has_partner_commission) { %>
+    <% if (commissionAmount !== null) { %>
+      <div class="mt-2">Mức hoa hồng (25% lợi nhuận): <strong class="text-success"><%= formatMoney(commissionAmount) %></strong></div>
+    <% } else { %>
+      <div class="mt-2 text-muted">Chưa xác định được — đơn hàng cần có Hóa đơn (đã giao hàng) mới tính được lợi nhuận thực tế.</div>
+    <% } %>
+  <% } %>
+</div>
+
+<div class="modal fade" id="cancelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" method="POST" action="/sales-orders/<%= row.id %>/cancel">
+      <div class="modal-header"><h5 class="modal-title">Hủy đơn bán <%= row.so_no %></h5></div>
+      <div class="modal-body">
+        <label class="form-label">Lý do hủy *</label>
+        <textarea name="reason" class="form-control" required></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="submit" class="btn btn-danger">Xác nhận hủy</button>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/delete-modal', { deleteUrl: '/sales-orders/' + row.id + '/delete', itemLabel: 'đơn bán "' + row.so_no + '"', modalId: 'delModal', backUrl: '/sales-orders' }) %>
+<%- include('../partials/footer') %>

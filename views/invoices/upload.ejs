@@ -1,0 +1,48 @@
+<%- include('../partials/header', {title: title}) %>
+<% const wq = (typeof wizard !== 'undefined' && wizard) ? ('?wizard=' + wizard) : ''; %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Đính kèm hóa đơn điện tử — <%= row.invoice_no %></h4>
+  <% if (wq) { %><a href="/wizard/<%= wizard %>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại Wizard</a><% } %>
+</div>
+
+<% if (!extracted) { %>
+  <div class="card p-3" style="max-width:600px">
+    <form method="POST" action="/invoices/<%= row.id %>/upload<%= wq %>" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label class="form-label">Chọn file hóa đơn điện tử (PDF hoặc XML)</label>
+        <input type="file" name="file" class="form-control" accept=".pdf,.xml,image/*" required>
+        <div class="form-text">Hệ thống sẽ cố gắng tự động đọc số hóa đơn, ngày, tổng tiền từ file PDF văn bản. File XML sẽ được lưu trực tiếp để tra cứu (không cần trích xuất). Ảnh chụp/scan chưa hỗ trợ tự động đọc — cần nhập tay.</div>
+      </div>
+      <button type="submit" class="btn btn-primary">Tải lên & Trích xuất</button>
+      <a href="/invoices/<%= row.id %>" class="btn btn-outline-secondary">Hủy</a>
+    </form>
+  </div>
+<% } else { %>
+  <% if (error && !extracted.invoiceNo && !extracted.totalAmount) { %>
+    <div class="alert alert-warning"><%= error %></div>
+  <% } else { %>
+    <div class="alert alert-success">Đã tải file lên và đọc thử nội dung. Vui lòng <strong>kiểm tra lại</strong> các thông tin dưới đây trước khi lưu (hệ thống chỉ đọc gợi ý tự động, có thể chưa chính xác 100%).</div>
+  <% } %>
+  <div class="card p-3" style="max-width:600px">
+    <form method="POST" action="/invoices/<%= row.id %>/upload/confirm<%= wq %>">
+      <div class="mb-3">
+        <label class="form-label">Ký hiệu hóa đơn (Serial)</label>
+        <input type="text" name="external_invoice_serial" class="form-control" value="<%= extracted.invoiceSerial || '' %>">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Số hóa đơn điện tử (do NCC phần mềm hóa đơn cấp)</label>
+        <input type="text" name="external_invoice_no" class="form-control" value="<%= extracted.invoiceNo || '' %>">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Ngày hóa đơn</label>
+        <input type="date" name="external_invoice_date" class="form-control" value="<%= extracted.invoiceDate || '' %>">
+      </div>
+      <% if (extracted.totalAmount) { %>
+        <div class="alert alert-info py-2">Số tiền đọc được trên hóa đơn: <strong><%= extracted.totalAmount.toLocaleString('vi-VN') %> đ</strong> (chỉ để đối chiếu, không tự động ghi vào hệ thống).</div>
+      <% } %>
+      <button type="submit" class="btn btn-primary">Lưu thông tin</button>
+      <a href="/invoices/<%= row.id %>" class="btn btn-outline-secondary">Bỏ qua</a>
+    </form>
+  </div>
+<% } %>
+<%- include('../partials/footer') %>

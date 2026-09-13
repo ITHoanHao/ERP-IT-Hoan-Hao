@@ -1,0 +1,30 @@
+<%- include('../partials/header', {title: 'Báo giá'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Danh sách báo giá</h4>
+  <a href="/quotations/new" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Tạo báo giá</a>
+</div>
+<form method="GET" class="mb-3">
+  <input type="text" name="q" class="form-control" style="max-width:400px" placeholder="Tìm theo số báo giá, khách hàng, sản phẩm..." value="<%= q %>">
+</form>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Số báo giá</th><th>Khách hàng</th><th>Sản phẩm/Dịch vụ</th><th>Ngày</th><th>Trạng thái</th><th>Tổng tiền</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><a href="/quotations/<%= r.id %>"><%= r.quotation_no %></a></td>
+      <td><%= r.customer_name %></td>
+      <td class="text-muted small"><%= r.items_preview || '-' %></td>
+      <td><%= formatDate(r.quotation_date) %></td>
+      <td>
+        <% const st = {draft:['Nháp','secondary'],sent:['Đã gửi khách','info'],confirmed:['Đã chốt','success'],rejected:['Từ chối/Hết hạn','danger']}[r.status]; %>
+        <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+      </td>
+      <td><%= formatMoney(r.total_amount) %></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="6" class="text-muted text-center py-3">Chưa có báo giá nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

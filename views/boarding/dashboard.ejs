@@ -1,0 +1,72 @@
+<%- include('../partials/header', {title: 'Quản lý nhà trọ'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Quản lý nhà trọ — Tổng quan Tháng <%= month.split('-')[1] %>/<%= month.split('-')[0] %></h4>
+  <form method="GET" class="d-flex gap-2">
+    <input type="month" name="month" value="<%= month %>" class="form-control form-control-sm" onchange="this.form.submit()">
+  </form>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card p-3 bg-success-subtle">
+      <div class="text-muted small">Doanh thu thu từ khách thuê</div>
+      <div class="fs-4 fw-bold"><%= formatMoney(revenue) %> đ</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3 bg-warning-subtle">
+      <div class="text-muted small">Chi phí vận hành</div>
+      <div class="fs-4 fw-bold"><%= formatMoney(totalCosts) %> đ</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3 <%= profit >= 0 ? 'bg-primary-subtle' : 'bg-danger-subtle' %>">
+      <div class="text-muted small">Lợi nhuận tháng này</div>
+      <div class="fs-4 fw-bold"><%= formatMoney(profit) %> đ</div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex gap-2 mb-3 flex-wrap">
+  <a href="/nhatro/billing/<%= month %>" class="btn btn-primary btn-sm">Nhập số điện & tính tiền phòng</a>
+  <a href="/nhatro/costs/<%= month %>" class="btn btn-outline-secondary btn-sm">Nhập chi phí vận hành</a>
+  <a href="/nhatro/tenants" class="btn btn-outline-secondary btn-sm">Người thuê trọ</a>
+  <a href="/nhatro/rooms" class="btn btn-outline-secondary btn-sm">Danh sách phòng</a>
+  <a href="/nhatro/reports" class="btn btn-outline-secondary btn-sm">Báo cáo nhiều tháng</a>
+</div>
+
+<% if (roomsNotBilled.length) { %>
+<div class="alert alert-warning">Chưa tính tiền tháng này cho: <strong><%= roomsNotBilled.map(r => 'Phòng ' + r.room_name).join(', ') %></strong> — <a href="/nhatro/billing/<%= month %>">Nhập ngay</a></div>
+<% } %>
+
+<div class="card p-0 mb-4">
+  <table class="table table-hover mb-0">
+    <thead class="table-light"><tr><th>Phòng</th><th>Tiền phòng</th><th>Điện</th><th>Nước</th><th>Máy giặt</th><th>Phí QL</th><th>Khác</th><th>Tổng cộng</th><th>Trạng thái</th><th></th></tr></thead>
+    <tbody>
+    <% bills.forEach(b => { %>
+      <tr>
+        <td>Phòng <%= b.room_name %></td>
+        <td><%= formatMoney(b.room_price) %></td>
+        <td><%= formatMoney(b.electricity_amount) %></td>
+        <td><%= formatMoney(b.water_amount) %></td>
+        <td><%= formatMoney(b.laundry_amount) %></td>
+        <td><%= formatMoney(b.management_amount) %></td>
+        <td><%= formatMoney(b.misc_amount) %></td>
+        <td class="fw-bold"><%= formatMoney(b.total_amount) %></td>
+        <td>
+          <% if (b.payment_status === 'paid') { %><span class="badge bg-success">Đã thu</span>
+          <% } else { %>
+            <form method="POST" action="/nhatro/billing/<%= month %>/<%= b.room_id %>/mark-paid" class="d-inline">
+              <button class="btn btn-sm btn-outline-success">Đánh dấu đã thu</button>
+            </form>
+          <% } %>
+        </td>
+        <td><a href="/nhatro/billing/<%= month %>/<%= b.room_id %>/pdf" class="btn btn-sm btn-outline-dark">PDF</a></td>
+      </tr>
+    <% }) %>
+    <% if (bills.length === 0) { %><tr><td colspan="10" class="text-muted text-center py-3">Chưa có dữ liệu tháng này.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,33 @@
+<%- include('../partials/header', {title: title}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Tạo đơn hàng</h4>
+  <a href="/wizard/new" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Bắt đầu đơn hàng mới</a>
+</div>
+
+<p class="text-muted">Đi theo từng bước: Báo giá → Gửi khách → Khách chốt → Đơn mua hàng → Nhận hàng → Giao hàng → Hóa đơn &amp; chứng từ → Thanh toán. Hệ thống sẽ không cho bỏ qua bước nào.</p>
+
+<% if (!orders.length) { %>
+  <div class="alert alert-light border">Hiện không có đơn hàng nào đang xử lý dở. Bấm "Bắt đầu đơn hàng mới" để tạo đơn đầu tiên.</div>
+<% } else { %>
+  <div class="card">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Báo giá</th><th>Khách hàng</th><th>Đang ở bước</th><th></th></tr></thead>
+      <tbody>
+        <% orders.forEach(o => { %>
+          <% const current = o.steps.find(s => s.status === 'current' || s.status === 'rejected'); %>
+          <tr>
+            <td><%= o.quotation.quotation_no %></td>
+            <td><%= o.quotation.customer_name %></td>
+            <td>
+              <% if (current) { %>
+                <span class="badge bg-<%= current.status === 'rejected' ? 'danger' : 'primary' %>"><%= current.label %></span>
+              <% } %>
+            </td>
+            <td class="text-end"><a href="/wizard/<%= o.quotation.id %>" class="btn btn-sm btn-outline-primary">Tiếp tục →</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+<% } %>
+<%- include('../partials/footer') %>

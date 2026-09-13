@@ -1,0 +1,51 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<div class="card p-3" style="max-width:600px">
+<% if (typeof wizard !== 'undefined' && wizard) { %>
+  <div class="mb-2"><a href="/wizard/<%= wizard %>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại Wizard</a></div>
+<% } %>
+<form method="POST" action="/payments">
+  <% if (typeof wizard !== 'undefined' && wizard) { %><input type="hidden" name="wizard" value="<%= wizard %>"><% } %>
+  <input type="hidden" name="source_doc_type" value="<%= docType || '' %>">
+  <input type="hidden" name="source_doc_id" value="<%= sourceId || '' %>">
+  <% if (sourceDoc) { %>
+    <div class="alert alert-info py-2">
+      Gắn với chứng từ: <strong><%= sourceDoc.invoice_no || sourceDoc.po_no %></strong>
+      <% if (sourceDoc.customer_name) { %> - Khách hàng: <%= sourceDoc.customer_name %><% } %>
+      <% if (sourceDoc.supplier_name) { %> - NCC: <%= sourceDoc.supplier_name %><% } %>
+    </div>
+  <% } else { %>
+    <div class="alert alert-warning py-2">Không gắn chứng từ gốc — hệ thống sẽ đánh dấu "thiếu chứng từ gốc".</div>
+  <% } %>
+  <div class="mb-3">
+    <label class="form-label">Loại</label>
+    <select name="payment_type" class="form-select" <%= sourceDoc ? 'disabled' : '' %>>
+      <option value="thu" <%= suggestedType === 'thu' ? 'selected' : '' %>>Thu tiền</option>
+      <option value="chi" <%= suggestedType === 'chi' ? 'selected' : '' %>>Chi tiền</option>
+    </select>
+    <% if (sourceDoc) { %><input type="hidden" name="payment_type" value="<%= suggestedType %>"><% } %>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Số tiền *</label>
+    <input type="number" name="amount" class="form-control money-input" required value="<%= suggestedAmount || 0 %>" <%= docType === 'invoice' ? 'readonly' : '' %>>
+    <% if (docType === 'invoice') { %><div class="form-text">Phải thu đủ 100% số tiền hóa đơn — không hỗ trợ thu một phần.</div><% } %>
+  </div>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Hình thức</label>
+      <select name="payment_method" class="form-select"><option value="cash">Tiền mặt</option><option value="bank">Chuyển khoản</option></select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Nguồn quỹ</label>
+      <select name="fund_source" class="form-select"><option value="cash">Quỹ tiền mặt</option><option value="bank">Tài khoản ngân hàng</option></select>
+    </div>
+  </div>
+  <div class="mb-3 mt-3">
+    <label class="form-label">Ghi chú</label>
+    <input type="text" name="note" class="form-control">
+  </div>
+  <button type="submit" class="btn btn-primary">Xác nhận</button>
+  <a href="/payments" class="btn btn-outline-secondary">Hủy</a>
+</form>
+</div>
+<%- include('../partials/footer') %>

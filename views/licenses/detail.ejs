@@ -1,0 +1,78 @@
+<%- include('../partials/header', {title: row.license_no}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.license_no %> <% if (row.vendor_type === 'microsoft') { %><span class="badge bg-primary">Microsoft</span><% } else if (row.vendor_type === 'autodesk') { %><span class="badge bg-danger">Autodesk</span><% } %>
+    <% const st = {active:['Đang dùng','success'],expired:['Hết hạn','danger'],renewed:['Đã gia hạn','secondary'],cancelled:['Đã hủy','dark']}[row.status]; %>
+    <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+  </h4>
+  <div>
+    <% if (row.vendor_type === 'microsoft' || row.vendor_type === 'autodesk') { %>
+      <a href="/licenses/<%= row.id %>/pdf" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf"></i> Xuất thông tin đặt hàng (PDF)</a>
+    <% } %>
+    <% if (row.status === 'active') { %>
+      <a href="/licenses/<%= row.id %>/edit" class="btn btn-sm btn-outline-primary">Sửa</a>
+      <a href="/licenses/<%= row.id %>/renew" class="btn btn-sm btn-success">Gia hạn</a>
+      <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">Hủy</button>
+    <% } %>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+  </div>
+</div>
+
+<div class="card p-3 mb-3">
+  <div><strong>Khách hàng:</strong> <a href="/customers/<%= row.customer_id %>"><%= row.customer_name %></a></div>
+  <div><strong>Tên license:</strong> <%= row.license_name %></div>
+  <div><strong>Số lượng:</strong> <%= row.quantity %> &nbsp; <strong>Đơn giá (chưa VAT):</strong> <%= formatMoney(row.unit_price) %> đ &nbsp; <strong>Thuế:</strong> <%= row.tax_rate_percent %>%</div>
+  <div><strong>Ngày bắt đầu:</strong> <%= formatDate(row.start_date) %></div>
+  <div><strong>Ngày hết hạn:</strong> <%= row.expiry_date ? formatDate(row.expiry_date) : 'Không hết hạn (vĩnh viễn)' %></div>
+  <% if (row.note) { %><div><strong>Ghi chú:</strong> <%= row.note %></div><% } %>
+  <% if (renewedFrom) { %><div class="mt-2 text-muted">Được gia hạn từ license: <%= renewedFrom.license_no %></div><% } %>
+  <% if (renewedTo) { %><div class="mt-2"><strong>Đã được gia hạn thành:</strong> <a href="/licenses/<%= renewedTo.id %>"><%= renewedTo.license_no %></a></div><% } %>
+</div>
+
+<div class="card p-3 mb-3">
+  <h6>Chi tiết giá</h6>
+  <table class="table table-sm mb-0">
+    <tbody>
+      <tr><td>Tạm tính (chưa VAT)</td><td class="text-end"><%= formatMoney(row.subtotal_amount) %> đ</td></tr>
+      <tr><td>Tiền thuế VAT</td><td class="text-end"><%= formatMoney(row.vat_amount) %> đ</td></tr>
+      <tr class="fw-bold"><td>Tổng cộng</td><td class="text-end"><%= formatMoney(row.total_amount) %> đ</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<% if (row.vendor_type === 'microsoft') { %>
+<div class="card p-3">
+  <h6>Thông tin người dùng cuối (Microsoft Tenant)</h6>
+  <div><strong>Tên công ty:</strong> <%= row.ms_end_user_company_name || '-' %></div>
+  <div><strong>Địa chỉ:</strong> <%= row.ms_end_user_address || '-' %></div>
+  <div><strong>Điện thoại:</strong> <%= row.ms_end_user_phone || '-' %></div>
+  <div><strong>Người quản lý License:</strong> <%= row.ms_license_manager_name || '-' %></div>
+  <div><strong>Email quản trị:</strong> <%= row.ms_admin_email || '-' %></div>
+  <div><strong>Tenant/domain:</strong> <%= row.ms_tenant_domain || '-' %></div>
+</div>
+<% } %>
+<% if (row.vendor_type === 'autodesk') { %>
+<div class="card p-3">
+  <h6>Thông tin Autodesk</h6>
+  <div><strong>Tên người dùng cuối:</strong> <%= row.adsk_end_user_name || '-' %></div>
+  <div><strong>Email nhận license:</strong> <%= row.adsk_license_email || '-' %></div>
+  <div><strong>Người quản lý license (email):</strong> <%= row.adsk_manager_email || '-' %></div>
+  <div><strong>Contract ID:</strong> <%= row.adsk_contract_id || '-' %></div>
+  <div><strong>Subscription ID:</strong> <%= row.adsk_subscription_id || '-' %></div>
+</div>
+<% } %>
+
+<div class="modal fade" id="cancelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" method="POST" action="/licenses/<%= row.id %>/cancel">
+      <div class="modal-header"><h5 class="modal-title">Hủy license <%= row.license_no %></h5></div>
+      <div class="modal-body">Xác nhận hủy license này? Khách hàng sẽ không còn được nhắc gia hạn nữa.</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="submit" class="btn btn-danger">Xác nhận hủy</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/delete-modal', { deleteUrl: '/licenses/' + row.id + '/delete', itemLabel: 'license "' + row.license_no + '"', modalId: 'delModal', backUrl: '/licenses' }) %>
+<%- include('../partials/footer') %>

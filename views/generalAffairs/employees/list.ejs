@@ -1,0 +1,25 @@
+<%- include('../../partials/header', {title: 'Danh sách nhân viên'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Danh sách nhân viên</h4>
+  <a href="/tongvu/employees/new" class="btn btn-primary btn-sm">+ Thêm nhân viên</a>
+</div>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Mã NV</th><th>Họ tên</th><th>Chức vụ</th><th>Chi nhánh</th><th>SĐT</th><th>Ngày vào làm</th><th>Trạng thái</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><a href="/tongvu/employees/<%= r.id %>"><%= r.employee_code %></a></td>
+      <td><%= r.full_name %></td>
+      <td><%= r.position || '-' %></td>
+      <td><%= r.branch || '-' %></td>
+      <td><%= r.phone || '-' %></td>
+      <td><%= r.start_date ? formatDate(r.start_date) : '-' %></td>
+      <td><% if (r.status === 'active') { %><span class="badge bg-success">Đang làm</span><% } else { %><span class="badge bg-secondary">Đã nghỉ</span><% } %></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="7" class="text-muted text-center py-3">Chưa có nhân viên nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../../partials/footer') %>

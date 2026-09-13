@@ -1,0 +1,38 @@
+body { background: #f4f6f9; }
+.card { border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.table td, .table th { vertical-align: middle; font-size: 0.92rem; }
+.kpi-card { border-radius: 10px; }
+.kpi-value { font-size: 1.8rem; font-weight: 600; }
+.badge-status { font-size: 0.78rem; }
+.login-box { max-width: 380px; margin: 80px auto; }
+
+/* Sua loi Tom Select tu xuong dong tung chu khi ten san pham/KH/NCC dai,
+   lam kich thuoc khung bi keo gian (xay ra trong cac bang co cot hep,
+   vd cot "San pham" trong Bao gia/Don mua hang). Chi ap dung cho o dang
+   dong (control) khi CHUA mo dropdown - luc mo de tim kiem van hien day
+   du, xuong dong binh thuong trong danh sach goi y ben duoi. */
+td .ts-wrapper {
+  min-width: 0; /* cho phep co lai duoi kich thuoc chu, neu khong flexbox se khong chiu cat chu */
+}
+td .ts-wrapper .ts-control {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  min-width: 0;
+}
+td .ts-wrapper .ts-control > .item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Keo-tha doi thu tu dong san pham trong Bao gia */
+.drag-handle-cell {
+  cursor: grab;
+  font-size: 1.1rem;
+}
+.drag-handle-cell:active { cursor: grabbing; }
+tr.dragging-row { opacity: 0.4; }
+tr.drag-over-line { box-shadow: inset 0 2px 0 0 #0d6efd; }

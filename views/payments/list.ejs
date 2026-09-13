@@ -1,0 +1,27 @@
+<%- include('../partials/header', {title: 'Thu / Chi'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Sổ quỹ (Thu / Chi)</h4>
+  <div>
+    <a href="/expenses/new" class="btn btn-outline-danger btn-sm">+ Ghi chi phí</a>
+  </div>
+</div>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Số phiếu</th><th>Loại</th><th>Số tiền</th><th>Hình thức</th><th>Nguồn quỹ</th><th>Ngày</th><th>Ghi chú</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><a href="/payments/<%= r.id %>"><%= r.payment_no %></a></td>
+      <td><% if (r.payment_type === 'thu') { %><span class="badge bg-success">Thu</span><% } else { %><span class="badge bg-danger">Chi</span><% } %></td>
+      <td><%= formatMoney(r.amount) %></td>
+      <td><%= r.payment_method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản' %></td>
+      <td><%= r.fund_source === 'cash' ? 'Quỹ tiền mặt' : 'Ngân hàng' %></td>
+      <td><%= formatDate(r.payment_date) %></td>
+      <td><%= r.note %> <% if (!r.source_doc_type) { %><span class="badge bg-warning text-dark">Thiếu chứng từ gốc</span><% } %></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="7" class="text-muted text-center py-3">Chưa có giao dịch nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

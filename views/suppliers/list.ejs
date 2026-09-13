@@ -1,0 +1,27 @@
+<%- include('../partials/header', {title: 'Nhà cung cấp'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Danh sách nhà cung cấp</h4>
+  <a href="/suppliers/new" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Thêm nhà cung cấp</a>
+</div>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-4"><input type="text" name="q" class="form-control" placeholder="Tìm theo tên/SĐT..." value="<%= q %>"></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Tìm</button></div>
+</form>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Tên</th><th>SĐT</th><th>Công nợ?</th><th>Trạng thái</th><th></th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><a href="/suppliers/<%= r.id %>"><%= r.name %></a></td>
+      <td><%= r.phone %></td>
+      <td><% if (r.is_credit_allowed) { %><span class="badge bg-info">Có</span><% } else { %><span class="badge bg-light text-dark">Không</span><% } %></td>
+      <td><% if (r.is_active) { %><span class="badge bg-success">Hoạt động</span><% } else { %><span class="badge bg-secondary">Ngừng</span><% } %></td>
+      <td><a href="/suppliers/<%= r.id %>/edit" class="btn btn-sm btn-outline-primary">Sửa</a></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="5" class="text-muted text-center py-3">Không có nhà cung cấp nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

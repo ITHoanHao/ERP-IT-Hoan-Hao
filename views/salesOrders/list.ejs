@@ -1,0 +1,27 @@
+<%- include('../partials/header', {title: 'Đơn bán'}) %>
+<h4 class="mb-3">Danh sách đơn bán</h4>
+<form method="GET" class="mb-3">
+  <input type="text" name="q" class="form-control" style="max-width:400px" placeholder="Tìm theo số đơn, khách hàng, sản phẩm..." value="<%= q %>">
+</form>
+<div class="card p-0">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Số đơn</th><th>Khách hàng</th><th>Sản phẩm/Dịch vụ</th><th>Ngày</th><th>Trạng thái</th><th>Tổng tiền</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><a href="/sales-orders/<%= r.id %>"><%= r.so_no %></a></td>
+      <td><%= r.customer_name %></td>
+      <td class="text-muted small"><%= r.items_preview || '-' %></td>
+      <td><%= formatDate(r.order_date) %></td>
+      <td>
+        <% const st = {created:['Đã tạo','info'],delivered:['Đã hoàn tất','success'],cancelled:['Đã hủy','danger']}[r.status]; %>
+        <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+      </td>
+      <td><%= formatMoney(r.total_amount) %></td>
+    </tr>
+  <% }) %>
+  <% if (rows.length === 0) { %><tr><td colspan="6" class="text-muted text-center py-3">Chưa có đơn bán nào.</td></tr><% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

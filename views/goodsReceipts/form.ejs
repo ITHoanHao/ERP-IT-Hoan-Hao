@@ -1,0 +1,60 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<% if (typeof wizard !== 'undefined' && wizard) { %>
+  <div class="mb-2"><a href="/wizard/<%= wizard %>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại Wizard</a></div>
+<% } %>
+<form method="POST" action="/goods-receipts">
+  <% if (typeof wizard !== 'undefined' && wizard) { %><input type="hidden" name="wizard" value="<%= wizard %>"><% } %>
+  <input type="hidden" name="po_id" value="<%= po.id %>">
+  <div class="card p-3 mb-3">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Số hóa đơn NCC (nếu có)</label>
+        <input type="text" name="supplier_invoice_no" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Ngày hóa đơn</label>
+        <input type="date" name="supplier_invoice_date" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Số tiền hóa đơn</label>
+        <input type="number" name="supplier_invoice_amount" class="form-control">
+      </div>
+    </div>
+  </div>
+  <div class="card p-3">
+    <h6>Nhập chi tiết hàng về (chỉ hiện các dòng chưa nhận đủ)</h6>
+    <table class="table table-sm align-middle">
+      <thead><tr><th>Sản phẩm</th><th>Còn thiếu</th><th>Nhập serial (mỗi dòng 1 serial) HOẶC số lượng</th><th style="width:15%">Giá nhập thực tế</th></tr></thead>
+      <tbody>
+      <% lines.forEach(l => { %>
+        <tr>
+          <td>
+            <%= l.product_name %>
+            <input type="hidden" name="po_line_id" value="<%= l.id %>">
+            <input type="hidden" name="product_id" value="<%= l.product_id %>">
+            <input type="hidden" name="tracking_type" value="<%= l.tracking_type %>">
+          </td>
+          <td><%= l.quantity_ordered - l.quantity_received %></td>
+          <td>
+            <% if (l.tracking_type === 'serial') { %>
+              <textarea name="serial_no" class="form-control form-control-sm" rows="2" placeholder="Nhập từng serial, mỗi dòng 1 số. Có thể quét mã vạch (chuột vào ô rồi quét)."></textarea>
+              <input type="hidden" name="quantity" value="0">
+            <% } else { %>
+              <input type="number" name="quantity" class="form-control form-control-sm" value="<%= l.quantity_ordered - l.quantity_received %>" min="0">
+              <input type="hidden" name="serial_no" value="">
+            <% } %>
+          </td>
+          <td><input type="number" name="unit_cost" class="form-control form-control-sm" value="<%= l.unit_price_expected %>"></td>
+        </tr>
+      <% }) %>
+      <% if (!lines.length) { %><tr><td colspan="4" class="text-muted">Đơn mua này đã nhận đủ toàn bộ hàng.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+  <div class="mt-3">
+    <button type="submit" class="btn btn-primary" <%= !lines.length ? 'disabled' : '' %>>Xác nhận nhận hàng</button>
+    <a href="/purchase-orders/<%= po.id %>" class="btn btn-outline-secondary">Hủy</a>
+  </div>
+</form>
+<%- include('../partials/footer') %>

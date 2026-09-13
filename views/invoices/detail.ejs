@@ -1,0 +1,81 @@
+<%- include('../partials/header', {title: row.invoice_no}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.invoice_no %>
+    <% if (row.payment_status === 'paid') { %><span class="badge bg-success">Đã thu đủ</span><% } else { %><span class="badge bg-danger">Chưa thu</span><% } %>
+  </h4>
+  <div>
+    <a href="/invoices/<%= row.id %>/handover" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-text"></i> Biên bản bàn giao</a>
+    <a href="/invoices/<%= row.id %>/payment-request" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-text"></i> Đề nghị thanh toán</a>
+    <a href="/invoices/<%= row.id %>/upload" class="btn btn-sm btn-outline-dark">Đính kèm hóa đơn điện tử</a>
+    <a href="/invoices/<%= row.id %>/compose-email" class="btn btn-sm btn-outline-primary"><i class="bi bi-envelope"></i> Gửi email cho khách</a>
+    <% if (row.payment_status === 'unpaid') { %>
+      <a href="/payments/new?invoice_id=<%= row.id %>" class="btn btn-sm btn-success">Ghi nhận thanh toán</a>
+    <% } %>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+  </div>
+</div>
+<div class="card p-3 mb-3">
+  <div><strong>Khách hàng:</strong> <a href="/customers/<%= row.customer_id %>"><%= row.customer_name %></a></div>
+  <div><strong>Đơn bán:</strong> <a href="/sales-orders/<%= row.so_id %>"><%= row.so_no %></a></div>
+  <div><strong>Ngày hóa đơn:</strong> <%= formatDate(row.invoice_date) %></div>
+  <% if (row.external_invoice_no) { %><div><strong>Số hóa đơn điện tử:</strong> <%= row.external_invoice_serial ? (row.external_invoice_serial + '-') : '' %><%= row.external_invoice_no %> <% if (row.external_invoice_date) { %>(ngày <%= formatDate(row.external_invoice_date) %>)<% } %></div><% } %>
+</div>
+<% if (attachments && attachments.length) { %>
+<div class="card p-3 mb-3">
+  <h6>File đính kèm (hóa đơn điện tử, biên bản bàn giao/đề nghị thanh toán đã ký...)</h6>
+  <%- include('../partials/attachment-list', { attachments, folder: 'invoices', backUrl: '/invoices/' + row.id }) %>
+</div>
+<% } %>
+<div class="card p-3 mb-3">
+  <h6>Đính kèm thêm tài liệu (biên bản bàn giao/đề nghị thanh toán đã ký, scan...)</h6>
+
+  <div class="mb-2 text-muted small">Biên bản bàn giao đã ký</div>
+  <form method="POST" action="/documents/invoice/<%= row.id %>/upload" enctype="multipart/form-data" class="row g-2 mb-3">
+    <input type="hidden" name="back_url" value="/invoices/<%= row.id %>">
+    <input type="hidden" name="label" value="Biên bản bàn giao đã ký">
+    <div class="col-md-10">
+      <input type="file" name="file" class="form-control form-control-sm" required>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-primary w-100">Tải lên</button>
+    </div>
+  </form>
+
+  <div class="mb-2 text-muted small">Đề nghị thanh toán đã ký</div>
+  <form method="POST" action="/documents/invoice/<%= row.id %>/upload" enctype="multipart/form-data" class="row g-2">
+    <input type="hidden" name="back_url" value="/invoices/<%= row.id %>">
+    <input type="hidden" name="label" value="Đề nghị thanh toán đã ký">
+    <div class="col-md-10">
+      <input type="file" name="file" class="form-control form-control-sm" required>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-primary w-100">Tải lên</button>
+    </div>
+  </form>
+</div>
+<div class="card p-3 mb-3">
+  <h6>Chi tiết</h6>
+  <table class="table table-sm">
+    <thead><tr><th>Sản phẩm/Dịch vụ</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+    <tbody>
+    <% lines.forEach(l => { %>
+      <tr><td><%= l.product_name || l.description %></td><td><%= l.quantity %></td><td><%= formatMoney(l.unit_price) %></td><td><%= formatMoney(l.line_amount) %></td></tr>
+    <% }) %>
+    </tbody>
+    <tfoot>
+      <tr><td colspan="3" class="text-end">Tạm tính (chưa VAT)</td><td><%= formatMoney(row.subtotal_amount) %></td></tr>
+      <tr><td colspan="3" class="text-end">Thuế VAT</td><td><%= formatMoney(row.vat_amount) %></td></tr>
+      <tr class="fw-bold"><td colspan="3" class="text-end">Tổng tiền thanh toán</td><td><%= formatMoney(row.total_amount) %></td></tr>
+      <tr><td colspan="3" class="text-end text-muted">Giá vốn</td><td class="text-muted"><%= formatMoney(row.cogs_amount) %></td></tr>
+      <tr class="fw-bold text-success"><td colspan="3" class="text-end">Lợi nhuận (trên doanh thu chưa VAT)</td><td><%= formatMoney(row.profit_amount) %></td></tr>
+    </tfoot>
+  </table>
+</div>
+<% if (payment) { %>
+<div class="card p-3">
+  <h6>Thông tin thanh toán</h6>
+  <div>Số tiền: <%= formatMoney(payment.amount) %> đ — Hình thức: <%= payment.payment_method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản' %> — Ngày: <%= formatDate(payment.payment_date) %></div>
+</div>
+<% } %>
+<%- include('../partials/delete-modal', { deleteUrl: '/invoices/' + row.id + '/delete', itemLabel: 'hóa đơn "' + row.invoice_no + '"', modalId: 'delModal', backUrl: '/invoices' }) %>
+<%- include('../partials/footer') %>

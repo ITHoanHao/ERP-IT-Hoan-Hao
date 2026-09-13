@@ -1,0 +1,48 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3">Soạn email gửi khách hàng</h4>
+
+<% if (!hasContacts) { %>
+<div class="alert alert-warning">
+  Khách hàng <strong><%= row.customer_name %></strong> chưa có địa chỉ email liên hệ nào được thiết lập.
+  Vào <a href="/customers/<%= row.customer_id %>" target="_blank">trang khách hàng</a> để thêm email trước (mục "Liên hệ email").
+</div>
+<% } %>
+
+<div class="row g-3">
+  <div class="col-md-7">
+    <div class="card p-3 mb-3">
+      <h6>Xem trước nội dung</h6>
+      <div class="mb-2"><strong>Đến (To):</strong> <%= toList.join('; ') || '(chưa có)' %></div>
+      <div class="mb-2"><strong>CC:</strong> <%= ccList.join('; ') || '(không có)' %></div>
+      <div class="mb-2"><strong>Tiêu đề:</strong> <%= subject %></div>
+      <div><strong>Nội dung:</strong></div>
+      <pre style="white-space: pre-wrap; font-family: inherit; background: #f8f9fa; padding: 10px; border-radius: 4px;"><%= body %></pre>
+    </div>
+  </div>
+
+  <div class="col-md-5">
+    <div class="card p-3 mb-3">
+      <h6>Bước 1: Mở Outlook đã điền sẵn</h6>
+      <a href="<%= mailtoUrl %>" class="btn btn-primary w-100"><i class="bi bi-envelope"></i> Mở Outlook để gửi email</a>
+      <div class="form-text mt-2">Phần nội dung phía trên sẽ được điền vào email — chữ ký đẹp (logo, thông tin liên hệ...) sẽ do <strong>chính Outlook tự động chèn thêm</strong> bên dưới, y hệt khi bạn soạn email mới bình thường. Nếu không thấy chữ ký hiện ra, kiểm tra lại Outlook đã bật "Tự động thêm chữ ký vào tin nhắn mới" chưa (File → Options → Mail → Signatures).</div>
+    </div>
+
+    <div class="card p-3 mb-3">
+      <h6>Bước 2: Kéo-thả các file sau vào email</h6>
+      <ul class="mb-0">
+        <li><a href="/quotations/<%= quotation ? quotation.id : '' %>/pdf"><%= quotation ? 'Báo giá ' + quotation.quotation_no : 'Báo giá (không tìm thấy)' %></a></li>
+        <li><a href="/invoices/<%= row.id %>/handover">Biên bản bàn giao (bản hệ thống tạo)</a></li>
+        <li><a href="/invoices/<%= row.id %>/payment-request">Đề nghị thanh toán (bản hệ thống tạo)</a></li>
+        <% attachments.forEach(a => { %>
+          <li><a href="/uploads/invoices/<%= a.file_path %>" target="_blank"><%= a.label || a.file_name %></a></li>
+        <% }) %>
+      </ul>
+      <% if (!attachments.length) { %>
+        <div class="text-muted small mt-2">Chưa có file đính kèm nào lưu trong hệ thống (hóa đơn điện tử, bản đã ký...) — quay lại trang chi tiết hóa đơn để tải lên nếu cần.</div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<a href="/invoices/<%= row.id %>" class="btn btn-outline-secondary">Quay lại</a>
+<%- include('../partials/footer') %>

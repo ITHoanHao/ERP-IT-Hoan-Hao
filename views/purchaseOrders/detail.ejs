@@ -1,0 +1,99 @@
+<%- include('../partials/header', {title: row.po_no}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.po_no %>
+    <% const st = {ordered:['Đã đặt','info'],partially_received:['Nhận một phần','warning'],completed:['Hoàn tất','success'],cancelled:['Đã hủy','danger']}[row.status]; %>
+    <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+  </h4>
+  <div>
+    <% if (row.status === 'ordered' || row.status === 'partially_received') { %>
+      <a href="/goods-receipts/new?po_id=<%= row.id %>" class="btn btn-sm btn-success">Nhận hàng</a>
+    <% } %>
+    <% if (row.status === 'ordered') { %>
+      <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">Hủy đơn</button>
+    <% } %>
+    <% if (receipts.length) { %>
+      <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delChainModal">Xóa toàn bộ chuỗi liên quan</button>
+    <% } else { %>
+      <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+    <% } %>
+  </div>
+</div>
+<div class="card p-3 mb-3">
+  <div><strong>Nhà cung cấp:</strong> <a href="/suppliers/<%= row.supplier_id %>"><%= row.supplier_name %></a></div>
+  <div><strong>Ngày đặt:</strong> <%= formatDate(row.order_date) %></div>
+  <% if (row.expected_date) { %><div><strong>Dự kiến về:</strong> <%= formatDate(row.expected_date) %></div><% } %>
+  <% if (row.status === 'cancelled') { %><div class="text-danger"><strong>Lý do hủy:</strong> <%= row.cancel_reason %></div><% } %>
+  <div class="mt-2">
+    <strong>Trạng thái theo dõi giao hàng:</strong>
+    <form class="d-inline" method="POST" action="/purchase-orders/<%= row.id %>/delivery-status">
+      <select name="delivery_status_note" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+        <% DELIVERY_STATUS_OPTIONS.forEach(s => { %><option value="<%= s %>" <%= row.delivery_status_note === s ? 'selected' : '' %>><%= s %></option><% }) %>
+      </select>
+    </form>
+    <span class="form-text">Đây là trạng thái theo dõi giao vận do bạn tự cập nhật — độc lập với trạng thái hệ thống ở trên (Đã đặt/Hoàn tất/Đã hủy).</span>
+  </div>
+</div>
+<div class="card p-3 mb-3">
+  <h6>Chi tiết đặt hàng</h6>
+  <table class="table table-sm">
+    <thead><tr><th>Sản phẩm</th><th>SL đặt</th><th>SL đã nhận</th><th>Giá dự kiến (chưa VAT)</th><th>Thuế suất</th><th>Thành tiền (chưa VAT)</th></tr></thead>
+    <tbody>
+    <% lines.forEach(l => { %>
+      <tr><td><%= l.product_name %></td><td><%= l.quantity_ordered %></td><td><%= l.quantity_received %></td><td><%= formatMoney(l.unit_price_expected) %></td><td><%= l.tax_rate_label || '8%' %></td><td><%= formatMoney(l.line_amount) %></td></tr>
+    <% }) %>
+    </tbody>
+    <tfoot>
+      <tr><td colspan="5" class="text-end">Tạm tính (chưa VAT)</td><td><%= formatMoney(row.subtotal_amount) %></td></tr>
+      <tr><td colspan="5" class="text-end">Tiền thuế VAT</td><td><%= formatMoney(row.vat_amount) %></td></tr>
+      <tr class="fw-bold"><td colspan="5" class="text-end">Tổng cộng thanh toán NCC</td><td><%= formatMoney(row.total_amount) %></td></tr>
+    </tfoot>
+  </table>
+</div>
+<% if (receipts.length) { %>
+<div class="card p-3">
+  <h6>Lịch sử nhận hàng</h6>
+  <ul class="mb-0"><% receipts.forEach(r => { %><li><a href="/goods-receipts/<%= r.id %>"><%= r.gr_no %></a> - <%= formatDate(r.receipt_date) %></li><% }) %></ul>
+</div>
+<% } %>
+
+<div class="modal fade" id="cancelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" method="POST" action="/purchase-orders/<%= row.id %>/cancel">
+      <div class="modal-header"><h5 class="modal-title">Hủy đơn mua <%= row.po_no %></h5></div>
+      <div class="modal-body"><label class="form-label">Lý do hủy *</label><textarea name="reason" class="form-control" required></textarea></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="submit" class="btn btn-danger">Xác nhận hủy</button>
+      </div>
+    </form>
+  </div>
+</div>
+<% if (receipts.length) { %>
+<div class="modal fade" id="delChainModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" method="POST" action="/purchase-orders/<%= row.id %>/delete-chain">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Xóa toàn bộ chuỗi liên quan</h5>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning py-2 mb-3">Hành động này <strong>KHÔNG THỂ hoàn tác</strong>. Toàn bộ dữ liệu sau sẽ bị xóa cùng lúc:</div>
+        <ul>
+          <li>Đơn mua hàng <strong><%= row.po_no %></strong></li>
+          <% receipts.forEach(r => { %><li>Phiếu nhận hàng <strong><%= r.gr_no %></strong> (tồn kho đã nhập sẽ bị xóa theo)</li><% }) %>
+          <% if (payment) { %><li>Phiếu chi <strong><%= payment.payment_no %></strong></li><% } %>
+        </ul>
+        <div class="alert alert-info py-2 small">Hệ thống sẽ tự kiểm tra: nếu hàng đã nhập về mà <strong>đã bị bán/giao cho khách</strong> rồi thì sẽ <strong>từ chối xóa</strong> để tránh làm sai lệch dữ liệu — lúc đó cần xử lý phiếu Giao hàng liên quan trước.</div>
+        <label class="form-label">Mật khẩu quản trị viên *</label>
+        <input type="password" name="confirm_password" class="form-control" required autocomplete="off">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="submit" class="btn btn-danger">Xác nhận xóa toàn bộ</button>
+      </div>
+    </form>
+  </div>
+</div>
+<% } else { %>
+<%- include('../partials/delete-modal', { deleteUrl: '/purchase-orders/' + row.id + '/delete', itemLabel: 'đơn mua hàng "' + row.po_no + '"', modalId: 'delModal', backUrl: '/purchase-orders' }) %>
+<% } %>
+<%- include('../partials/footer') %>

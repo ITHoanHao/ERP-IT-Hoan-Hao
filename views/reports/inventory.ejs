@@ -1,0 +1,24 @@
+<%- include('../partials/header', {title: 'Tồn kho'}) %>
+<h4 class="mb-3">Báo cáo tồn kho</h4>
+<div class="card p-3 mb-3 bg-info-subtle">
+  <div class="fw-bold">Tổng giá trị tồn kho: <%= formatMoney(totalValue) %> đ</div>
+</div>
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h6>Hàng theo Serial (đang trong kho)</h6>
+      <table class="table table-sm"><thead><tr><th>Sản phẩm</th><th>Số lượng</th></tr></thead>
+      <tbody><% serials.forEach(s => { %><tr><td><%= s.product_name %></td><td><%= s.c %></td></tr><% }) %>
+      <% if (!serials.length) { %><tr><td colspan="2" class="text-muted">Không có</td></tr><% } %></tbody></table>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h6>Hàng theo lô (số lượng)</h6>
+      <table class="table table-sm"><thead><tr><th>Sản phẩm</th><th>Lô</th><th>Còn lại</th><th>Giá trị</th></tr></thead>
+      <tbody><% batches.forEach(b => { %><tr><td><%= b.product_name %></td><td><%= b.batch_no %></td><td><%= b.quantity_remaining %></td><td><%= formatMoney(b.value) %></td></tr><% }) %>
+      <% if (!batches.length) { %><tr><td colspan="4" class="text-muted">Không có</td></tr><% } %></tbody></table>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

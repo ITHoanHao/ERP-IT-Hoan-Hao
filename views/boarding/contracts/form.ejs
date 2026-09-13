@@ -1,0 +1,88 @@
+<%- include('../../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<form method="POST" action="<%= renewFromId ? '/nhatro/contracts/' + renewFromId + '/renew' : '/nhatro/contracts/' + row.id %>">
+  <div class="card p-3 mb-3">
+    <div><strong>Phòng:</strong> <%= room.room_name %></div>
+    <div><strong>Số người cùng ký hợp đồng này:</strong> <%= tenants.length %></div>
+  </div>
+
+  <% tenants.forEach((tenant, idx) => { %>
+  <div class="card p-3 mb-3">
+    <h6>Người thuê <%= idx + 1 %>: <%= tenant.full_name %></h6>
+    <input type="hidden" name="tenant_id" value="<%= tenant.id %>">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Ngày sinh</label>
+        <input type="date" name="dob_<%= tenant.id %>" class="form-control" value="<%= tenant.dob || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Giới tính</label>
+        <select name="gender_<%= tenant.id %>" class="form-select">
+          <option value="">-- Chọn --</option>
+          <option value="Nam" <%= tenant.gender === 'Nam' ? 'selected' : '' %>>Nam</option>
+          <option value="Nữ" <%= tenant.gender === 'Nữ' ? 'selected' : '' %>>Nữ</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Số điện thoại</label>
+        <input type="text" name="phone_<%= tenant.id %>" class="form-control" value="<%= tenant.phone || '' %>">
+      </div>
+      <div class="col-md-12">
+        <label class="form-label">Nơi đăng ký HK thường trú</label>
+        <input type="text" name="permanent_address_<%= tenant.id %>" class="form-control" value="<%= tenant.permanent_address || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Số CMND/CCCD</label>
+        <input type="text" name="id_number_<%= tenant.id %>" class="form-control" value="<%= tenant.id_number || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Ngày cấp</label>
+        <input type="date" name="id_issue_date_<%= tenant.id %>" class="form-control" value="<%= tenant.id_issue_date || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Nơi cấp</label>
+        <input type="text" name="id_issue_place_<%= tenant.id %>" class="form-control" value="<%= tenant.id_issue_place || '' %>">
+      </div>
+    </div>
+  </div>
+  <% }) %>
+  <% if (tenants.length === 0) { %>
+    <div class="alert alert-warning">Phòng này chưa có ai — vào "Gán/chuyển phòng" để gán người thuê trước.</div>
+  <% } %>
+
+  <div class="card p-3 mb-3">
+    <h6>Thông tin hợp đồng (áp dụng chung cho cả phòng)</h6>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Ngày bắt đầu</label>
+        <input type="date" name="contract_start_date" class="form-control" value="<%= row.contract_start_date || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Ngày kết thúc</label>
+        <input type="date" name="contract_end_date" class="form-control" value="<%= row.contract_end_date || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Thời hạn (VD: 1 năm)</label>
+        <input type="text" name="contract_duration_text" class="form-control" value="<%= row.contract_duration_text || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Thời gian thuê tối thiểu</label>
+        <input type="text" name="min_stay_text" class="form-control" value="<%= row.min_stay_text || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Tiền đặt cọc</label>
+        <input type="number" name="deposit_amount" class="form-control money-input" value="<%= row.deposit_amount || 0 %>">
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="laundry_registered" id="laundry" <%= row.laundry_registered ? 'checked' : '' %>>
+          <label class="form-check-label" for="laundry">Có đăng ký dùng máy giặt (cho phòng)</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Lưu hợp đồng</button>
+  <a href="/nhatro/contracts" class="btn btn-outline-secondary">Hủy</a>
+</form>
+<%- include('../../partials/footer') %>

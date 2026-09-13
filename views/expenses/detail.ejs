@@ -1,0 +1,33 @@
+<%- include('../partials/header', {title: row.expense_no}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.expense_no %></h4>
+  <div>
+    <% if (!attachments.length) { %>
+      <a href="/expenses/<%= row.id %>/upload" class="btn btn-sm btn-warning">Đính kèm hóa đơn ngay</a>
+    <% } %>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+  </div>
+</div>
+<div class="card p-3 mb-3">
+  <div><strong>Loại chi phí:</strong> <%= row.category %></div>
+  <div><strong>Ngày:</strong> <%= formatDate(row.expense_date) %></div>
+  <div><strong>Số tiền:</strong> <%= formatMoney(row.amount) %> đ</div>
+  <% if (row.description) { %><div><strong>Diễn giải:</strong> <%= row.description %></div><% } %>
+</div>
+
+<div class="card p-3">
+  <h6>Hóa đơn/Chứng từ đính kèm</h6>
+  <% if (!attachments.length) { %>
+    <div class="alert alert-warning py-2 mb-0">Chưa có hóa đơn/chứng từ nào được đính kèm cho khoản chi này. <a href="/expenses/<%= row.id %>/upload">Đính kèm ngay</a>.</div>
+  <% } else { %>
+    <ul class="mb-2">
+      <% attachments.forEach(a => { %>
+        <li><a href="/uploads/expenses/<%= a.file_path %>" target="_blank"><%= a.file_name %></a> <span class="text-muted">(<%= formatDate(a.uploaded_at) %>)</span></li>
+      <% }) %>
+    </ul>
+    <a href="/expenses/<%= row.id %>/upload" class="btn btn-sm btn-outline-secondary">+ Đính kèm thêm file khác</a>
+  <% } %>
+</div>
+
+<%- include('../partials/delete-modal', { deleteUrl: '/expenses/' + row.id + '/delete', itemLabel: 'chi phí "' + row.expense_no + '"', modalId: 'delModal', backUrl: '/expenses' }) %>
+<%- include('../partials/footer') %>

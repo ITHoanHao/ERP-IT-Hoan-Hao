@@ -1,0 +1,53 @@
+<%- include('../../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<form method="POST" action="<%= row.id ? '/nhatro/tenants/' + row.id : '/nhatro/tenants' %>">
+  <div class="card p-3 mb-3">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Họ tên *</label>
+        <input type="text" name="full_name" class="form-control" required value="<%= row.full_name || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Ngày sinh</label>
+        <input type="text" name="dob" class="form-control" value="<%= row.dob || '' %>" placeholder="VD: 17/3/2004">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Giới tính</label>
+        <select name="gender" class="form-select">
+          <option value="">-- Chọn --</option>
+          <option value="Nam" <%= row.gender === 'Nam' ? 'selected' : '' %>>Nam</option>
+          <option value="Nữ" <%= row.gender === 'Nữ' ? 'selected' : '' %>>Nữ</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">CMND/CCCD</label>
+        <input type="text" name="id_number" class="form-control" value="<%= row.id_number || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Số điện thoại</label>
+        <input type="text" name="phone" class="form-control" value="<%= row.phone || '' %>">
+      </div>
+      <div class="col-md-4"></div>
+      <div class="col-md-8">
+        <label class="form-label">Địa chỉ thường trú</label>
+        <input type="text" name="permanent_address" class="form-control" value="<%= row.permanent_address || '' %>">
+      </div>
+      <div class="col-md-4"></div>
+      <div class="col-md-4">
+        <label class="form-label">Loại xe máy</label>
+        <input type="text" name="vehicle_type" class="form-control" value="<%= row.vehicle_type || '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Biển số xe</label>
+        <input type="text" name="license_plate" class="form-control" value="<%= row.license_plate || '' %>">
+      </div>
+      <div class="col-md-12">
+        <label class="form-label">Ghi chú</label>
+        <textarea name="note" class="form-control"><%= row.note || '' %></textarea>
+      </div>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">Lưu</button>
+  <a href="/nhatro/tenants" class="btn btn-outline-secondary">Hủy</a>
+</form>
+<%- include('../../partials/footer') %>

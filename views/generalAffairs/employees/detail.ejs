@@ -1,0 +1,126 @@
+<%- include('../../partials/header', {title: row.full_name}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.full_name %> <span class="text-muted small">(<%= row.employee_code %>)</span>
+    <% if (row.status === 'active') { %><span class="badge bg-success">Đang làm</span><% } else { %><span class="badge bg-secondary">Đã nghỉ</span><% } %>
+  </h4>
+  <div>
+    <a href="/tongvu/employees/<%= row.id %>/edit" class="btn btn-sm btn-outline-primary">Sửa</a>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+  </div>
+</div>
+
+<div class="card p-3 mb-3">
+  <div class="row">
+    <div class="col-md-6">
+      <div><strong>Ngày sinh:</strong> <%= row.dob ? formatDate(row.dob) : '-' %></div>
+      <div><strong>Giới tính:</strong> <%= row.gender || '-' %></div>
+      <div><strong>CMND/CCCD:</strong> <%= row.id_number || '-' %></div>
+      <div><strong>SĐT:</strong> <%= row.phone || '-' %></div>
+      <div><strong>Email:</strong> <%= row.email || '-' %></div>
+      <div><strong>Địa chỉ:</strong> <%= row.address || '-' %></div>
+      <div><strong>Trình độ học vấn:</strong> <%= row.education_level || '-' %></div>
+    </div>
+    <div class="col-md-6">
+      <div><strong>Chức vụ:</strong> <%= row.position || '-' %></div>
+      <div><strong>Chi nhánh/Phòng ban:</strong> <%= row.branch || '-' %></div>
+      <div><strong>Loại hợp đồng:</strong> <%= row.contract_type || '-' %></div>
+      <div><strong>Ngày vào làm:</strong> <%= row.start_date ? formatDate(row.start_date) : '-' %></div>
+      <% if (row.end_date) { %><div><strong>Ngày nghỉ việc:</strong> <%= formatDate(row.end_date) %></div><% } %>
+      <div><strong>Ngân hàng:</strong> <%= row.bank_name || '-' %><% if (row.bank_branch) { %> — CN <%= row.bank_branch %><% } %></div>
+      <div><strong>Số tài khoản:</strong> <%= row.bank_account_number || '-' %><% if (row.bank_account_holder) { %> (<%= row.bank_account_holder %>)<% } %></div>
+    </div>
+  </div>
+  <% if (row.note) { %><div class="mt-2"><strong>Ghi chú:</strong> <%= row.note %></div><% } %>
+</div>
+
+<div class="card p-3 mb-3">
+  <h6>Lương cơ bản</h6>
+  <div id="salaryDisplay">
+    <span class="fs-5">••••••••</span>
+    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="revealSalaryBtn"><i class="bi bi-eye"></i> Xem lương (cần mật khẩu)</button>
+  </div>
+</div>
+
+<% if (assets.length) { %>
+<div class="card p-3 mb-3">
+  <h6>Tài sản đang sử dụng</h6>
+  <ul class="mb-0">
+    <% assets.forEach(a => { %>
+      <li><a href="/tongvu/assets/<%= a.id %>"><%= a.asset_code %> - <%= a.asset_name %></a></li>
+    <% }) %>
+  </ul>
+</div>
+<% } %>
+
+<div class="card p-3 mb-3">
+  <h6>Hồ sơ đính kèm (CV, bằng cấp, hợp đồng lao động, scan CMND/CCCD...)</h6>
+  <%- include('../../partials/attachment-list', { attachments, folder: 'employees', backUrl: '/tongvu/employees/' + row.id }) %>
+  <form method="POST" action="/documents/employee/<%= row.id %>/upload" enctype="multipart/form-data" class="row g-2">
+    <input type="hidden" name="back_url" value="/tongvu/employees/<%= row.id %>">
+    <div class="col-md-5">
+      <input type="text" name="label" class="form-control form-control-sm" placeholder="Nhãn" value="Hồ sơ nhân viên">
+    </div>
+    <div class="col-md-5">
+      <input type="file" name="file" class="form-control form-control-sm" required>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-primary w-100">Tải lên</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="salaryPasswordModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Nhập mật khẩu để xem lương</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div id="salaryError" class="alert alert-danger py-2 d-none"></div>
+        <label class="form-label">Mật khẩu quản trị viên *</label>
+        <input type="password" id="salaryPassword" class="form-control" autocomplete="off">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-primary" id="salarySubmitBtn">Xem lương</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+let salaryModalInstance;
+document.addEventListener('DOMContentLoaded', () => {
+  salaryModalInstance = new bootstrap.Modal(document.getElementById('salaryPasswordModal'));
+  document.getElementById('revealSalaryBtn').addEventListener('click', () => {
+    document.getElementById('salaryPassword').value = '';
+    document.getElementById('salaryError').classList.add('d-none');
+    salaryModalInstance.show();
+  });
+  document.getElementById('salarySubmitBtn').addEventListener('click', submitSalaryPassword);
+  document.getElementById('salaryPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitSalaryPassword(); });
+});
+async function submitSalaryPassword() {
+  const password = document.getElementById('salaryPassword').value;
+  const errBox = document.getElementById('salaryError');
+  try {
+    const res = await fetch('/tongvu/employees/<%= row.id %>/reveal-salary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ confirm_password: password }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      errBox.textContent = data.error || 'Sai mật khẩu.';
+      errBox.classList.remove('d-none');
+      return;
+    }
+    const data = await res.json();
+    document.getElementById('salaryDisplay').innerHTML = '<span class="fs-5 fw-bold">' + Number(data.base_salary).toLocaleString('vi-VN') + ' đ</span>';
+    salaryModalInstance.hide();
+  } catch (e) {
+    errBox.textContent = 'Lỗi kết nối: ' + e.message;
+    errBox.classList.remove('d-none');
+  }
+}
+</script>
+
+<%- include('../../partials/delete-modal', { deleteUrl: '/tongvu/employees/' + row.id + '/delete', itemLabel: 'nhân viên "' + row.full_name + '"', modalId: 'delModal', backUrl: '/tongvu/employees' }) %>
+<%- include('../../partials/footer') %>

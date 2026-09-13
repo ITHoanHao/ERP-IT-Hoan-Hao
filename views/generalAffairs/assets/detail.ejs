@@ -1,0 +1,65 @@
+<%- include('../../partials/header', {title: row.asset_name}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><%= row.asset_name %> <span class="text-muted small">(<%= row.asset_code %>)</span></h4>
+  <div>
+    <a href="/tongvu/assets/<%= row.id %>/edit" class="btn btn-sm btn-outline-primary">Sửa</a>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+  </div>
+</div>
+
+<div class="card p-3 mb-3">
+  <div class="row">
+    <div class="col-md-6">
+      <div><strong>Nhóm tài sản:</strong> <%= row.category || '-' %></div>
+      <div><strong>Số lượng:</strong> <%= row.quantity %></div>
+      <div><strong>Số serial/IMEI:</strong> <%= row.serial_no || '-' %></div>
+      <div><strong>Nhà cung cấp:</strong> <%= row.supplier_name || '-' %></div>
+      <div><strong>Ngày mua:</strong> <%= row.purchase_date ? formatDate(row.purchase_date) : '-' %></div>
+      <div><strong>Số hóa đơn mua:</strong> <%= row.purchase_invoice_no || '-' %></div>
+      <% if (row.warranty_until) { %><div><strong>Bảo hành đến:</strong> <%= formatDate(row.warranty_until) %></div><% } %>
+    </div>
+    <div class="col-md-6">
+      <div><strong>Người đang sử dụng:</strong> <% if (row.user_name) { %><a href="/tongvu/employees/<%= row.current_user_id %>"><%= row.user_name %></a><% } else { %>Chưa cấp phát<% } %></div>
+      <div><strong>Địa chỉ/Chi nhánh:</strong> <%= row.location || '-' %></div>
+      <div><strong>Ngày cấp phát:</strong> <%= row.assigned_date ? formatDate(row.assigned_date) : '-' %></div>
+      <div><strong>Tình trạng:</strong>
+        <% const st = {in_use:['Đang dùng','success'],broken:['Hỏng - chờ sửa','warning'],disposed:['Đã thanh lý','dark'],in_stock:['Trong kho','info'],lost:['Thất lạc','danger']}[row.status]; %>
+        <span class="badge bg-<%= st[1] %>"><%= st[0] %></span>
+      </div>
+    </div>
+  </div>
+  <% if (row.note) { %><div class="mt-2"><strong>Ghi chú:</strong> <%= row.note %></div><% } %>
+</div>
+
+<div class="card p-3 mb-3">
+  <h6>Khấu hao (đường thẳng)</h6>
+  <table class="table table-sm mb-0">
+    <tbody>
+      <tr><td>Nguyên giá</td><td class="text-end"><%= formatMoney(row.purchase_cost) %> đ</td></tr>
+      <tr><td>Thời gian khấu hao</td><td class="text-end"><%= row.useful_life_months %> tháng</td></tr>
+      <tr><td>Đã khấu hao</td><td class="text-end"><%= dep.monthsElapsed %> tháng</td></tr>
+      <tr><td>Khấu hao lũy kế</td><td class="text-end"><%= formatMoney(dep.accumulatedDepreciation) %> đ</td></tr>
+      <tr class="fw-bold"><td>Giá trị còn lại</td><td class="text-end"><%= formatMoney(dep.bookValue) %> đ <% if (dep.isFullyDepreciated) { %><span class="badge bg-secondary">Đã khấu hao hết</span><% } %></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card p-3 mb-3">
+  <h6>Tài liệu đính kèm (hóa đơn mua, biên bản bàn giao tài sản...)</h6>
+  <%- include('../../partials/attachment-list', { attachments, folder: 'assets', backUrl: '/tongvu/assets/' + row.id }) %>
+  <form method="POST" action="/documents/asset/<%= row.id %>/upload" enctype="multipart/form-data" class="row g-2">
+    <input type="hidden" name="back_url" value="/tongvu/assets/<%= row.id %>">
+    <div class="col-md-5">
+      <input type="text" name="label" class="form-control form-control-sm" placeholder="Nhãn" value="Hóa đơn mua hàng">
+    </div>
+    <div class="col-md-5">
+      <input type="file" name="file" class="form-control form-control-sm" required>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-primary w-100">Tải lên</button>
+    </div>
+  </form>
+</div>
+
+<%- include('../../partials/delete-modal', { deleteUrl: '/tongvu/assets/' + row.id + '/delete', itemLabel: 'tài sản "' + row.asset_name + '"', modalId: 'delModal', backUrl: '/tongvu/assets' }) %>
+<%- include('../../partials/footer') %>

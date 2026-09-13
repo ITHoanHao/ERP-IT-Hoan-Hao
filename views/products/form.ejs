@@ -1,0 +1,93 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<div class="card p-3" style="max-width:700px">
+<form method="POST" action="<%= row.id ? '/products/' + row.id : '/products' %>">
+  <div class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label">Mã sản phẩm (SKU)</label>
+      <input type="text" class="form-control" value="<%= sku %>" disabled>
+      <input type="hidden" name="sku" value="<%= sku %>">
+    </div>
+    <div class="col-md-8">
+      <label class="form-label">Tên sản phẩm *</label>
+      <input type="text" name="name" class="form-control" required value="<%= row.name || '' %>">
+    </div>
+    <div class="col-md-12">
+      <label class="form-label">Nhập từ nhà cung cấp nào?</label>
+      <select name="supplier_id" class="form-select searchable-select" data-placeholder="Gõ tên nhà cung cấp để tìm...">
+        <option value="">-- Chọn nhà cung cấp --</option>
+        <% suppliers.forEach(s => { %>
+          <option value="<%= s.id %>" <%= row.supplier_id === s.id ? 'selected' : '' %>><%= s.name %></option>
+        <% }) %>
+      </select>
+      <% if (!suppliers.length) { %><div class="form-text">Chưa có nhà cung cấp nào — <a href="/suppliers/new" target="_blank">thêm nhà cung cấp</a> trước.</div><% } %>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Nhóm sản phẩm</label>
+      <select name="category" class="form-select" data-attr-type="category" onchange="handleAttrSelect(this, 'category')">
+        <option value="">-- Chọn nhóm --</option>
+        <% categories.forEach(c => { %>
+          <option value="<%= c %>" <%= row.category === c ? 'selected' : '' %>><%= c %></option>
+        <% }) %>
+        <option value="__add_new__" class="fw-bold text-primary">+ Thêm nhóm mới...</option>
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Thương hiệu</label>
+      <select name="brand" class="form-select" data-attr-type="brand" onchange="handleAttrSelect(this, 'brand')">
+        <option value="">-- Chọn thương hiệu --</option>
+        <% brands.forEach(b => { %>
+          <option value="<%= b %>" <%= row.brand === b ? 'selected' : '' %>><%= b %></option>
+        <% }) %>
+        <option value="__add_new__" class="fw-bold text-primary">+ Thêm thương hiệu mới...</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Hình thức quản lý tồn kho *</label>
+      <% if (row.id) { %>
+        <input type="text" class="form-control" value="<%= row.tracking_type === 'serial' ? 'Theo Serial' : 'Theo số lượng' %>" disabled>
+        <div class="form-text"><%= hasTransaction ? 'Đã có giao dịch — không thể đổi.' : 'Chưa có giao dịch nhưng vẫn giữ nguyên khi sửa để tránh sai sót.' %></div>
+      <% } else { %>
+        <select name="tracking_type" class="form-select" required>
+          <option value="quantity">Theo số lượng</option>
+          <option value="serial">Theo Serial (từng máy)</option>
+        </select>
+      <% } %>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Đơn vị tính</label>
+      <% const currentUnit = row.unit || 'Cái';
+         const isKnownUnit = units.includes(currentUnit); %>
+      <select name="unit" class="form-select" data-attr-type="unit" onchange="handleAttrSelect(this, 'unit')">
+        <% units.forEach(u => { %>
+          <option value="<%= u %>" <%= currentUnit === u ? 'selected' : '' %>><%= u %></option>
+        <% }) %>
+        <% if (!isKnownUnit) { %><option value="<%= currentUnit %>" selected><%= currentUnit %> (giá trị cũ)</option><% } %>
+        <option value="__add_new__" class="fw-bold text-primary">+ Thêm đơn vị tính mới...</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Mức tồn kho tối thiểu (chỉ áp dụng theo số lượng)</label>
+      <input type="number" name="min_stock_level" class="form-control" value="<%= row.min_stock_level || 0 %>">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Bảo hành mặc định (tháng)</label>
+      <input type="number" name="warranty_months_default" class="form-control" value="<%= row.warranty_months_default || 0 %>">
+    </div>
+    <% if (row.id) { %>
+    <div class="col-md-6">
+      <div class="form-check form-switch mt-4">
+        <input class="form-check-input" type="checkbox" name="is_active" <%= row.is_active ? 'checked' : '' %>>
+        <label class="form-check-label">Đang kinh doanh</label>
+      </div>
+    </div>
+    <% } %>
+  </div>
+  <div class="mt-3">
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a href="/products" class="btn btn-outline-secondary">Hủy</a>
+  </div>
+</form>
+</div>
+<%- include('../partials/attr-quickadd-modal') %>
+<%- include('../partials/footer') %>

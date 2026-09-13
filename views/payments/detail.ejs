@@ -1,0 +1,14 @@
+<%- include('../partials/header', {title: row.payment_no}) %>
+<h4 class="mb-3"><%= row.payment_no %></h4>
+<div class="card p-3" style="max-width:500px">
+  <div><strong>Loại:</strong> <%= row.payment_type === 'thu' ? 'Thu tiền' : 'Chi tiền' %></div>
+  <div><strong>Số tiền:</strong> <%= formatMoney(row.amount) %> đ</div>
+  <div><strong>Hình thức:</strong> <%= row.payment_method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản' %></div>
+  <div><strong>Nguồn quỹ:</strong> <%= row.fund_source === 'cash' ? 'Quỹ tiền mặt' : 'Ngân hàng' %></div>
+  <div><strong>Ngày:</strong> <%= formatDate(row.payment_date) %></div>
+  <% if (row.note) { %><div><strong>Ghi chú:</strong> <%= row.note %></div><% } %>
+</div>
+<a href="/payments" class="btn btn-outline-secondary btn-sm mt-3">← Quay lại danh sách</a>
+<button class="btn btn-outline-danger btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#delModal">Xóa</button>
+<%- include('../partials/delete-modal', { deleteUrl: '/payments/' + row.id + '/delete', itemLabel: 'phiếu "' + row.payment_no + '"', modalId: 'delModal', backUrl: '/payments' }) %>
+<%- include('../partials/footer') %>

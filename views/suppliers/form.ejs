@@ -1,0 +1,59 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<div class="card p-3" style="max-width:700px">
+<form method="POST" action="<%= row.id ? '/suppliers/' + row.id : '/suppliers' %>">
+  <div class="row g-3">
+    <div class="col-md-8">
+      <label class="form-label">Tên nhà cung cấp *</label>
+      <input type="text" name="name" class="form-control" required value="<%= row.name || '' %>">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Số điện thoại</label>
+      <input type="text" name="phone" class="form-control" value="<%= row.phone || '' %>">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Mã số thuế</label>
+      <input type="text" name="tax_code" class="form-control" value="<%= row.tax_code || '' %>">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Người liên hệ</label>
+      <input type="text" name="contact_person" class="form-control" value="<%= row.contact_person || '' %>">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Email</label>
+      <input type="email" name="email" class="form-control" value="<%= row.email || '' %>">
+    </div>
+    <div class="col-md-12">
+      <label class="form-label">Địa chỉ</label>
+      <input type="text" name="address" class="form-control" value="<%= row.address || '' %>">
+    </div>
+    <div class="col-md-4">
+      <div class="form-check form-switch mt-4">
+        <input class="form-check-input" type="checkbox" name="is_credit_allowed" <%= row.is_credit_allowed ? 'checked' : '' %>>
+        <label class="form-check-label">Được phép công nợ</label>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Hạn mức công nợ (đ)</label>
+      <input type="number" name="credit_limit" class="form-control money-input" value="<%= row.credit_limit || 0 %>">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Thời hạn công nợ (ngày)</label>
+      <input type="number" name="credit_term_days" class="form-control" value="<%= row.credit_term_days || 15 %>">
+    </div>
+    <% if (row.id) { %>
+    <div class="col-md-6">
+      <div class="form-check form-switch mt-2">
+        <input class="form-check-input" type="checkbox" name="is_active" <%= row.is_active ? 'checked' : '' %>>
+        <label class="form-check-label">Đang hoạt động</label>
+      </div>
+    </div>
+    <% } %>
+  </div>
+  <div class="mt-3">
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a href="/suppliers" class="btn btn-outline-secondary">Hủy</a>
+  </div>
+</form>
+</div>
+<%- include('../partials/footer') %>

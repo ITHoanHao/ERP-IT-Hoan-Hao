@@ -1,0 +1,20 @@
+<!-- Modal dung chung: them nhanh Nhom san pham / Thuong hieu / Don vi tinh -->
+<div class="modal fade" id="attrQuickAddModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="attrQuickAddTitle">Thêm mới</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="attrQuickAddError" class="alert alert-danger py-2 d-none"></div>
+        <label class="form-label" id="attrQuickAddLabel">Giá trị mới</label>
+        <input type="text" id="attrQuickAddInput" class="form-control" autofocus>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="attrQuickAddCancelBtn">Hủy</button>
+        <button type="button" class="btn btn-primary" onclick="submitAttrQuickAdd()">Lưu & chọn</button>
+      </div>
+    </div>
+  </div>
+</div>

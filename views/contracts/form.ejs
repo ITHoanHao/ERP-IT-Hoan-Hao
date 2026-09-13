@@ -1,0 +1,72 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<form method="POST" action="<%= row ? '/contracts/' + row.id : '/contracts' %>">
+  <input type="hidden" name="so_id" value="<%= so.so_id %>">
+
+  <div class="card p-3 mb-3">
+    <div><strong>Đơn bán:</strong> <%= so.so_no %></div>
+    <div><strong>Khách hàng:</strong> <%= so.name %></div>
+    <div><strong>Giá trị:</strong> <%= formatMoney(so.total_amount) %> đ</div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h6>Thông tin Bên B (khách hàng) — dùng cho hợp đồng</h6>
+    <div class="form-text mb-2">Thông tin này lưu chung cho khách hàng, dùng lại cho các hợp đồng sau.</div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Người đại diện</label>
+        <input type="text" name="representative_name" class="form-control" value="<%= so.representative_name || '' %>" placeholder="VD: Ông Nguyễn Văn A">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Chức vụ</label>
+        <input type="text" name="representative_position" class="form-control" value="<%= so.representative_position || '' %>" placeholder="VD: Giám đốc">
+      </div>
+      <div class="col-md-12">
+        <label class="form-label">Số tài khoản ngân hàng</label>
+        <input type="text" name="bank_account" class="form-control" value="<%= so.bank_account || '' %>">
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h6>Thông tin hợp đồng</h6>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Ngày ký</label>
+        <input type="date" name="contract_date" class="form-control" value="<%= row ? row.contract_date : new Date().toISOString().slice(0,10) %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Mức thuế suất (ghi trên hợp đồng)</label>
+        <select name="tax_rate_label" class="form-select">
+          <% ['Không chịu thuế', '0%', '5%', '8%', '10%', 'Không kê khai, tính nộp thuế GTGT', 'Không phải kê khai thuế GTGT'].forEach(t => { %>
+            <option value="<%= t %>" <%= (row ? row.tax_rate_label : '') === t ? 'selected' : '' %>><%= t %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Bảo hành (tháng)</label>
+        <input type="number" name="warranty_months" class="form-control" value="<%= row ? row.warranty_months : 12 %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Đơn giá có hiệu lực đến ngày</label>
+        <input type="date" name="price_valid_until" class="form-control" value="<%= row ? row.price_valid_until || '' : '' %>">
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">Tiến độ thanh toán</label>
+        <input type="text" name="payment_terms_text" class="form-control" value="<%= row ? row.payment_terms_text : defaultPaymentTerms %>">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Địa điểm giao hàng (để trống = dùng địa chỉ công ty)</label>
+        <input type="text" name="delivery_address" class="form-control" value="<%= row ? row.delivery_address || '' : (settings.company_address || '') %>">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Điện thoại giao hàng (để trống = dùng SĐT công ty)</label>
+        <input type="text" name="delivery_phone" class="form-control" value="<%= row ? row.delivery_phone || '' : (settings.company_phone || '') %>">
+      </div>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Lưu hợp đồng</button>
+  <a href="/sales-orders/<%= so.so_id %>" class="btn btn-outline-secondary">Hủy</a>
+</form>
+<%- include('../partials/footer') %>

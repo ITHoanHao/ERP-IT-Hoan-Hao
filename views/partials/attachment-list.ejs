@@ -1,0 +1,17 @@
+<%
+// Su dung: include('../partials/attachment-list', { attachments, folder: 'invoices', backUrl: '/invoices/5' })
+%>
+<% if (attachments.length) { %>
+  <ul class="mb-2">
+    <% attachments.forEach(a => { %>
+      <li class="mb-1">
+        <a href="/uploads/<%= folder %>/<%= a.file_path %>" target="_blank"><%= a.label || a.file_name %></a>
+        <span class="text-muted small">(<%= a.file_name %>, <%= formatDate(a.uploaded_at) %>)</span>
+        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" data-bs-toggle="modal" data-bs-target="#delAtt<%= a.id %>" title="Xóa file này">Xóa</button>
+      </li>
+      <%- include('./delete-modal', { deleteUrl: '/documents/attachments/' + a.id + '/delete', itemLabel: 'file "' + (a.label || a.file_name) + '"', modalId: 'delAtt' + a.id, backUrl: backUrl }) %>
+    <% }) %>
+  </ul>
+<% } else { %>
+  <div class="text-muted mb-2">Chưa có file đính kèm nào.</div>
+<% } %>

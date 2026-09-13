@@ -1,0 +1,151 @@
+<%- include('partials/header', {title: 'Dashboard'}) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Tổng quan</h4>
+  <a href="/wizard" class="btn btn-primary btn-lg"><i class="bi bi-magic"></i> Tạo đơn hàng</a>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card kpi-card p-3 bg-primary-subtle">
+      <div class="text-muted small">Doanh thu tháng này</div>
+      <div class="kpi-value financial-value" data-field="revenue">••••••••</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card kpi-card p-3 bg-success-subtle">
+      <div class="text-muted small">Lợi nhuận tháng này</div>
+      <div class="kpi-value financial-value" data-field="profit">••••••••</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card kpi-card p-3 bg-warning-subtle">
+      <div class="text-muted small">Công nợ phải thu</div>
+      <div class="kpi-value financial-value" data-field="debtReceivable">••••••••</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card kpi-card p-3 bg-info-subtle">
+      <div class="text-muted small">Báo giá chờ phản hồi</div>
+      <div class="kpi-value"><%= pendingQuotations %></div>
+    </div>
+  </div>
+</div>
+<div class="mb-4">
+  <button type="button" class="btn btn-sm btn-outline-secondary" id="revealFinancialsBtn"><i class="bi bi-eye"></i> Xem số liệu tài chính (cần mật khẩu)</button>
+</div>
+
+<% if (missingReceiptExpenses.length) { %>
+<div class="alert alert-warning d-flex justify-content-between align-items-center">
+  <div><i class="bi bi-exclamation-triangle"></i> Có <strong><%= missingReceiptExpenses.length %></strong> khoản chi phí <strong>chưa đính kèm hóa đơn/chứng từ</strong>. Vui lòng bổ sung để tra cứu sau này.</div>
+  <a href="/expenses" class="btn btn-sm btn-warning">Xem ngay</a>
+</div>
+<% } %>
+
+<% if (expiringLicenses.length) { %>
+<div class="alert alert-danger d-flex justify-content-between align-items-center">
+  <div><i class="bi bi-clock-history"></i> Có <strong><%= expiringLicenses.length %></strong> license sắp hết hạn (trong 14 ngày tới hoặc đã quá hạn) — hỏi khách hàng có gia hạn không:
+    <ul class="mb-0 mt-1">
+      <% expiringLicenses.slice(0, 5).forEach(l => { %>
+        <li><a href="/licenses/<%= l.id %>"><%= l.license_name %></a> - <%= l.customer_name %> - hết hạn <%= formatDate(l.expiry_date) %> <% if (l.isOverdue) { %><span class="badge bg-dark">Đã quá hạn</span><% } %></li>
+      <% }) %>
+    </ul>
+  </div>
+  <a href="/licenses" class="btn btn-sm btn-danger">Xem tất cả</a>
+</div>
+<% } %>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h6>Đơn bán gần đây</h6>
+      <table class="table table-sm">
+        <thead><tr><th>Số ĐH</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+        <% recentSO.forEach(so => { %>
+          <tr>
+            <td><a href="/sales-orders/<%= so.id %>"><%= so.so_no %></a></td>
+            <td><%= so.customer_name %></td>
+            <td><%= formatMoney(so.total_amount) %></td>
+            <td><span class="badge bg-secondary badge-status"><%= so.status %></span></td>
+          </tr>
+        <% }) %>
+        <% if (recentSO.length === 0) { %><tr><td colspan="4" class="text-muted">Chưa có đơn bán nào.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h6>Cảnh báo tồn kho thấp</h6>
+      <table class="table table-sm">
+        <thead><tr><th>Sản phẩm</th><th>Lô</th><th>Còn lại</th><th>Mức tối thiểu</th></tr></thead>
+        <tbody>
+        <% lowStock.forEach(r => { %>
+          <tr><td><%= r.name %></td><td><%= r.batch_no %></td><td class="text-danger"><%= r.quantity_remaining %></td><td><%= r.min_stock_level %></td></tr>
+        <% }) %>
+        <% if (lowStock.length === 0) { %><tr><td colspan="4" class="text-muted">Không có cảnh báo.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="financialsPasswordModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nhập mật khẩu để xem số liệu tài chính</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="financialsError" class="alert alert-danger py-2 d-none"></div>
+        <label class="form-label">Mật khẩu quản trị viên *</label>
+        <input type="password" id="financialsPassword" class="form-control" autocomplete="off">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-primary" id="financialsSubmitBtn">Xem số liệu</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+let financialsModalInstance;
+document.addEventListener('DOMContentLoaded', () => {
+  financialsModalInstance = new bootstrap.Modal(document.getElementById('financialsPasswordModal'));
+  document.getElementById('revealFinancialsBtn').addEventListener('click', () => {
+    document.getElementById('financialsPassword').value = '';
+    document.getElementById('financialsError').classList.add('d-none');
+    financialsModalInstance.show();
+  });
+  document.getElementById('financialsSubmitBtn').addEventListener('click', submitFinancialsPassword);
+  document.getElementById('financialsPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitFinancialsPassword(); });
+});
+
+async function submitFinancialsPassword() {
+  const password = document.getElementById('financialsPassword').value;
+  const errBox = document.getElementById('financialsError');
+  try {
+    const res = await fetch('/reveal-financials', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ confirm_password: password }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      errBox.textContent = data.error || 'Sai mật khẩu.';
+      errBox.classList.remove('d-none');
+      return;
+    }
+    const data = await res.json();
+    document.querySelector('[data-field="revenue"]').textContent = Number(data.revenue).toLocaleString('vi-VN') + ' đ';
+    document.querySelector('[data-field="profit"]').textContent = Number(data.profit).toLocaleString('vi-VN') + ' đ';
+    document.querySelector('[data-field="debtReceivable"]').textContent = Number(data.debtReceivable).toLocaleString('vi-VN') + ' đ';
+    document.getElementById('revealFinancialsBtn').classList.add('d-none');
+    financialsModalInstance.hide();
+  } catch (e) {
+    errBox.textContent = 'Lỗi kết nối: ' + e.message;
+    errBox.classList.remove('d-none');
+  }
+}
+</script>
+<%- include('partials/footer') %>

@@ -1,0 +1,20 @@
+<%- include('../partials/header', {title: row.gr_no}) %>
+<h4 class="mb-3"><%= row.gr_no %></h4>
+<div class="card p-3 mb-3">
+  <div><strong>Đơn mua:</strong> <a href="/purchase-orders/<%= row.po_id %>"><%= row.po_no %></a></div>
+  <div><strong>Nhà cung cấp:</strong> <%= row.supplier_name %></div>
+  <div><strong>Ngày nhận:</strong> <%= formatDate(row.receipt_date) %></div>
+  <% if (row.supplier_invoice_no) { %><div><strong>Hóa đơn NCC:</strong> <%= row.supplier_invoice_no %> (<%= formatMoney(row.supplier_invoice_amount) %> đ)</div><% } %>
+</div>
+<div class="card p-3">
+  <h6>Chi tiết đã nhận</h6>
+  <table class="table table-sm">
+    <thead><tr><th>Sản phẩm</th><th>Serial/Lô</th><th>Số lượng</th><th>Giá nhập</th></tr></thead>
+    <tbody>
+    <% lines.forEach(l => { %>
+      <tr><td><%= l.product_name %></td><td><%= l.serial_no || l.batch_no %></td><td><%= l.quantity %></td><td><%= formatMoney(l.unit_cost) %></td></tr>
+    <% }) %>
+    </tbody>
+  </table>
+</div>
+<%- include('../partials/footer') %>

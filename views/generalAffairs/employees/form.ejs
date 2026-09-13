@@ -1,0 +1,140 @@
+<%- include('../../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<form method="POST" action="<%= row.id ? '/tongvu/employees/' + row.id : '/tongvu/employees' %>">
+  <div class="card p-3 mb-3">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Mã nhân viên</label>
+        <input type="text" class="form-control" value="<%= code %>" disabled>
+      </div>
+      <div class="col-md-9">
+        <label class="form-label">Họ tên *</label>
+        <input type="text" name="full_name" class="form-control" required value="<%= row.full_name || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Ngày sinh</label>
+        <input type="date" name="dob" class="form-control" value="<%= row.dob || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Giới tính</label>
+        <select name="gender" class="form-select">
+          <option value="">-- Chọn --</option>
+          <option value="Nam" <%= row.gender === 'Nam' ? 'selected' : '' %>>Nam</option>
+          <option value="Nữ" <%= row.gender === 'Nữ' ? 'selected' : '' %>>Nữ</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">CMND/CCCD</label>
+        <input type="text" name="id_number" class="form-control" value="<%= row.id_number || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Số điện thoại</label>
+        <input type="text" name="phone" class="form-control" value="<%= row.phone || '' %>">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" value="<%= row.email || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Trình độ học vấn</label>
+        <select name="education_level" class="form-select">
+          <option value="">-- Chọn --</option>
+          <% ['Trung học phổ thông', 'Trung cấp', 'Cao đẳng', 'Đại học', 'Sau đại học (Thạc sĩ/Tiến sĩ)', 'Khác'].forEach(t => { %>
+            <option value="<%= t %>" <%= row.education_level === t ? 'selected' : '' %>><%= t %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3"></div>
+      <div class="col-md-12">
+        <label class="form-label">Địa chỉ</label>
+        <input type="text" name="address" class="form-control" value="<%= row.address || '' %>">
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h6>Thông tin công việc</h6>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Chức vụ</label>
+        <select name="position" class="form-select searchable-select" data-placeholder="Gõ hoặc chọn chức vụ..." onchange="handleAttrSelect(this, 'position')">
+          <option value="">-- Chọn chức vụ --</option>
+          <% positions.forEach(p => { %><option value="<%= p %>" <%= row.position === p ? 'selected' : '' %>><%= p %></option><% }) %>
+          <option value="__add_new__" class="fw-bold text-primary">+ Thêm chức vụ mới...</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Chi nhánh / Phòng ban</label>
+        <select name="branch" class="form-select searchable-select" data-placeholder="Gõ hoặc chọn chi nhánh..." onchange="handleAttrSelect(this, 'branch')">
+          <option value="">-- Chọn chi nhánh/phòng ban --</option>
+          <% branches.forEach(b => { %><option value="<%= b %>" <%= row.branch === b ? 'selected' : '' %>><%= b %></option><% }) %>
+          <option value="__add_new__" class="fw-bold text-primary">+ Thêm chi nhánh/phòng ban mới...</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Loại hợp đồng</label>
+        <select name="contract_type" class="form-select">
+          <option value="">-- Chọn --</option>
+          <% ['Thử việc', 'Chính thức', 'Thời vụ'].forEach(t => { %>
+            <option value="<%= t %>" <%= row.contract_type === t ? 'selected' : '' %>><%= t %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Ngày vào làm</label>
+        <input type="date" name="start_date" class="form-control" value="<%= row.start_date || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Ngày nghỉ việc (nếu có)</label>
+        <input type="date" name="end_date" class="form-control" value="<%= row.end_date || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Trạng thái</label>
+        <select name="status" class="form-select">
+          <option value="active" <%= (!row.status || row.status === 'active') ? 'selected' : '' %>>Đang làm việc</option>
+          <option value="resigned" <%= row.status === 'resigned' ? 'selected' : '' %>>Đã nghỉ việc</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Lương cơ bản</label>
+        <input type="number" name="base_salary" class="form-control money-input" value="<%= row.base_salary || 0 %>">
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h6>Thông tin nhận lương qua ngân hàng</h6>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Ngân hàng</label>
+        <select name="bank_name" class="form-select searchable-select" data-placeholder="Gõ hoặc chọn ngân hàng..." onchange="handleAttrSelect(this, 'bank')">
+          <option value="">-- Chọn ngân hàng --</option>
+          <% banks.forEach(bk => { %><option value="<%= bk %>" <%= row.bank_name === bk ? 'selected' : '' %>><%= bk %></option><% }) %>
+          <option value="__add_new__" class="fw-bold text-primary">+ Thêm ngân hàng mới...</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Chi nhánh ngân hàng</label>
+        <input type="text" name="bank_branch" class="form-control" value="<%= row.bank_branch || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Số tài khoản</label>
+        <input type="text" name="bank_account_number" class="form-control" value="<%= row.bank_account_number || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Tên tài khoản</label>
+        <input type="text" name="bank_account_holder" class="form-control" value="<%= row.bank_account_holder || '' %>">
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <label class="form-label">Ghi chú</label>
+    <textarea name="note" class="form-control"><%= row.note || '' %></textarea>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Lưu</button>
+  <a href="/tongvu/employees" class="btn btn-outline-secondary">Hủy</a>
+</form>
+<%- include('../../partials/attr-quickadd-modal') %>
+<%- include('../../partials/footer') %>

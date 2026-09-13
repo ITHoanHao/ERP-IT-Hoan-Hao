@@ -1,0 +1,13 @@
+<%- include('../partials/header', {title: title}) %>
+<h4 class="mb-3"><%= title %></h4>
+<div class="card p-3" style="max-width:500px">
+<form method="POST" action="/expenses/<%= row.id %>/upload" enctype="multipart/form-data">
+  <div class="mb-3">
+    <label class="form-label">Chọn file hóa đơn/chứng từ (PDF hoặc ảnh)</label>
+    <input type="file" name="receipt_file" class="form-control" accept=".pdf,image/*" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Tải lên</button>
+  <a href="/expenses/<%= row.id %>" class="btn btn-outline-secondary">Hủy</a>
+</form>
+</div>
+<%- include('../partials/footer') %>
